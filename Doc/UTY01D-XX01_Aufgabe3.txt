@@ -23,6 +23,8 @@ Einsendeaufgabe UTY01D-XX01
 		- Füge andere Texturen hinzu und pinsele ein wenig auf dem Terrain
 		- Füge Baum Prefabs unter "Paint Trees->Edit Trees->Add Tree" hinzu
 		- Platziere einige Bäume
+		- Füge Gras hinzu über Paint Details->Edit Details und platziere etwas davon auf dem Terrain
+		- Setze BoxCollider als Begrenzungen um das Terrain (Boundary)
 	5. Bewegung und Kamera
 		- Eine Instanz von "PlayerArmature" Prefab befindet sich bereits in der Szene mit Third Person Controller
 		- Setze Parent Transform der Main Camera auf PlayerCameraRoot, damit sie dem Spieler folgt
