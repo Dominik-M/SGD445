@@ -1,0 +1,43 @@
+Einsendeaufgabe UTY01D-XX01
+3. Beschreibung der Arbeitsschritte
+	1. Unity Projekt erstellen im Unity Hub und auf Github hochladen
+		- Ich wähle New Project -> Unity Version 6000.3.8f1 -> 3D (Built-in Reder Pipeline) Template
+		- Erstelle Git Repository und check es im Projekt Ordner aus
+		- Alle Änderungen commiten und pushen
+	2. Starter Assets importieren
+		- Suche Starter Assets im Unity Asset Store (https://assetstore.unity.com/packages/essentials/starter-assets-thirdperson-urp-196526)
+		- Füge sie zu "My Assets" hinzu
+		- Öffne Package Manager im Unity Project und importiere das komplette Asset Paket
+	3. Shader Probleme lösen
+		- Stelle fest, dass das Asset Paket Universal Render Pipeline (URP) verwedendet, ich aber BRP gewählt habe
+		- Das führte unter anderem dazu, dass alle Objekte "Pink" gerendert werden
+		- Vermute Ursache dafür sind inkompatible Shader
+		-> Lösung: Ersetze alle Shader in allen Materials durch "Standard" Shader
+		- Ziehe "PlayerArmature" Prefab in die Szene zum Testen, rendert normal
+	4. Folge den Schritten aus dem Lernmaterial zum Erstellen von Terrain
+		- Rufe die Funktion GameObject > 3D Object > Terrain auf
+		- Terrain in Unterordner verschieben und umbenennen
+		- Benutze "Raise or Lower Terrain" um Hügel und Täler zu zeichnen
+		- Importiere Terrain Texturen von Standard Assets (Wähle nur Environment->SpeedTree und TerrainAssets)
+		- Setze Terrain Textur mit Paint Texture auf GrassHillAlbedo
+		- Füge andere Texturen hinzu und pinsele ein wenig auf dem Terrain
+		- Füge Baum Prefabs unter "Paint Trees->Edit Trees->Add Tree" hinzu
+		- Platziere einige Bäume
+	5. Bewegung und Kamera
+		- Eine Instanz von "PlayerArmature" Prefab befindet sich bereits in der Szene mit Third Person Controller
+		- Setze Parent Transform der Main Camera auf PlayerCameraRoot, damit sie dem Spieler folgt
+		- Stelle Position und Rotation der Kamera ein
+		- Tests im Unity Editor: Klick auf Play und laufe über meine Landschaft (ich nehme ein Gamepad, WASD geht aber auch)
+	6. Kompilieren, Testen, Abliefern
+		- Setze unter File->Build Profiles Einstellungen für "Web" Build
+		- Build im in neuen Ordner im Projekt ablegen (Webbuild)
+		- Alle Änderungen in Git pushen
+		- Git release erstellen mit Build binaries
+		- Itch.io Projekt erstellen mit Build binaries
+
+Ergebnis:
+	Spielbare Demo:
+	https://dundun2339.itch.io/sgd445
+
+	Code:
+	https://github.com/Dominik-M/SGD445/tree/main
