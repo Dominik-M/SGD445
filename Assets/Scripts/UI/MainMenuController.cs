@@ -25,6 +25,7 @@ public class MainMenuController : MonoBehaviour
 
     void LoadScene()
     {
+        Debug.Log("LoadScene(): " + sceneIdx);
         SceneManager.LoadScene(sceneIdx);
         loading = false;
     }

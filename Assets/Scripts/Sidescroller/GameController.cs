@@ -6,18 +6,27 @@ public class GameController : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private GameObject PlayerPrefab;
+    [SerializeField] private GameObject PlayerDestroyEffectPrefab;
     [SerializeField] private GameObject[] LevelPrefabs;
+
+    [Header("Sounds")]
     [SerializeField] private AudioClip LooseSound;
     [SerializeField] private AudioClip WinSound;
+    [SerializeField] private AudioClip GameOverSound;
+    [SerializeField] private AudioClip GameCompleteSound;
+    [SerializeField] private AudioClip PickupSound;
+
+    [Header("Settings")]
+    [SerializeField] private float TimePerLevel;
 
     private static GameController instance;
     public static GameController I => instance;
 
-    public event Action<bool> OnPauseResume;
     public event Action<int, int> OnScoreChanged;
 
-    private bool running = false, gameover = false;
     private int score;
+    private float remainingTime;
+    private bool gameover, gamecomplete;
     private GameObject player;
     private GameObject currentLevel;
     private int currentLevelIdx;
@@ -25,25 +34,11 @@ public class GameController : MonoBehaviour
     private Transform finish;
     private FollowerCamera followerCamera;
     private AudioSource audioSource;
-    public bool Running
-    {
-        get => running; set
-        {
-            if (!gameover && running != value)
-            {
-                running = value;
-                if (!running)
-                {
-                    Debug.Log("Game Paused");
-                }
-                else
-                {
-                    Debug.Log("Game Resumed");
-                }
-                OnPauseResume?.Invoke(running);
-            }
-        }
-    }
+
+    public int CurrentLevelIndex => currentLevelIdx;
+    public float RemainingTime => remainingTime;
+    public bool IsGameOver => gameover;
+    public bool IsGameComplete => gamecomplete;
     public int Score
     {
         get => score; set
@@ -57,11 +52,24 @@ public class GameController : MonoBehaviour
     void Start()
     {
         instance = this;
+        gameover = false;
+        gamecomplete = false;
         followerCamera = FindAnyObjectByType<FollowerCamera>();
         // ensure audio source
         if (audioSource == null) audioSource = GetComponent<AudioSource>();
         if (audioSource == null) audioSource = gameObject.AddComponent<AudioSource>();
         StartLevel(0);
+    }
+
+    void Update()
+    {
+        if (gameover) return;
+        remainingTime -= Time.deltaTime;
+        if (remainingTime <= 0)
+        {
+            remainingTime = 0;
+            GameOver();
+        }
     }
 
     public void PlaySound(AudioClip sound)
@@ -81,9 +89,17 @@ public class GameController : MonoBehaviour
             finish = currentLevel.transform.Find("Finish");
             foreach (TriggerHandler trigger in currentLevel.GetComponentsInChildren<TriggerHandler>())
                 trigger.OnEnter += TriggerEnterHook;
-            followerCamera.MinX = respawn.position.x - 4;
-            followerCamera.MaxX = finish.position.x;
-            Respawn();
+            if (respawn != null && finish != null)
+            {
+                followerCamera.MinX = respawn.position.x - 4;
+                followerCamera.MaxX = finish.position.x;
+                remainingTime = TimePerLevel;
+                Respawn();
+            }
+            else
+            {
+                Debug.LogWarning($"StartLevel({level}): Loaded level invalid - missing respawn or finish");
+            }
         }
         else
         {
@@ -105,7 +121,11 @@ public class GameController : MonoBehaviour
     public void Die()
     {
         PlaySound(LooseSound);
-        Respawn();
+        if (player != null)
+        {
+            if (PlayerDestroyEffectPrefab) Instantiate(PlayerDestroyEffectPrefab, player.transform.position, Quaternion.identity);
+            Destroy(player);
+        }
     }
 
     public void Finish()
@@ -117,15 +137,49 @@ public class GameController : MonoBehaviour
 
     void NextLevel()
     {
-        StartLevel(currentLevelIdx + 1);
+        if (currentLevelIdx + 1 < LevelPrefabs.Length)
+            StartLevel(currentLevelIdx + 1);
+        else
+            GameComplete();
+    }
+
+    void GameOver()
+    {
+        if (!gameover)
+        {
+            gameover = true;
+            Debug.Log("Game Over");
+            Die();
+            PlaySound(GameOverSound);
+        }
+    }
+    void GameComplete()
+    {
+        if (!gameover)
+        {
+            gameover = true;
+            gamecomplete = true;
+            Debug.Log("Game Complete");
+            PlaySound(GameCompleteSound);
+        }
     }
 
     void TriggerEnterHook(GameObject trigger, GameObject other)
     {
         if (!other.CompareTag("Player")) return;
         if (trigger.CompareTag("Boundary"))
+        {
             Die();
+            if (remainingTime > 2)
+                Invoke(nameof(Respawn), 2);
+        }
         else if (trigger.CompareTag("Finish"))
             Finish();
+        else if (trigger.CompareTag("Pickup"))
+        {
+            PlaySound(PickupSound);
+            Destroy(trigger.gameObject);
+            Score++;
+        }
     }
 }

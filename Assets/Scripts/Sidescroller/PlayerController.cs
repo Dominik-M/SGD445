@@ -9,8 +9,9 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private InputActionReference JumpInput;
     [SerializeField] private InputActionReference CancelInput;
     [Header("Parameter")]
-    [SerializeField] private float Speed = 2;
-    [SerializeField] private float JumpPower = 10;
+    [SerializeField] private float Acceleration = 500;
+    [SerializeField] private float MaxSpeed = 5;
+    [SerializeField] private float JumpPower = 300;
     [Header("References")]
     [SerializeField] private AudioClip JumpSound;
 
@@ -40,12 +41,19 @@ public class PlayerController : MonoBehaviour
     {
         Vector2 move = MoveInput.action.ReadValue<Vector2>();
         bool jump = JumpInput.action.WasPressedThisFrame();
-        rb.AddForce(new Vector3(move.x, move.y / 4, 0) * Speed * Time.deltaTime);
+        rb.AddForce(new Vector3(move.x, move.y / 10, 0) * Acceleration * Time.deltaTime);
         if (jump && CanJump())
         {
             rb.AddForce(new Vector3(0, JumpPower, 0));
             if (_audioSource != null && JumpSound != null)
                 _audioSource.PlayOneShot(JumpSound);
+        }
+        // Clamp X-Speed
+        float xspeed = rb.linearVelocity.x;
+        if (Mathf.Abs(xspeed) > MaxSpeed)
+        {
+            xspeed = Mathf.Clamp(xspeed, -MaxSpeed, MaxSpeed);
+            rb.linearVelocity = new Vector3(xspeed, rb.linearVelocity.y, rb.linearVelocity.z);
         }
     }
 

@@ -125,7 +125,7 @@ Rigidbody:
   m_GameObject: {fileID: 6344721019883177469}
   serializedVersion: 5
   m_Mass: 1
-  m_LinearDamping: 1
+  m_LinearDamping: 0.1
   m_AngularDamping: 1
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
@@ -158,9 +158,10 @@ MonoBehaviour:
   MoveInput: {fileID: -1680190386980627800, guid: 289c1b55c9541489481df5cc06664110, type: 3}
   JumpInput: {fileID: -2099379676528639254, guid: 289c1b55c9541489481df5cc06664110, type: 3}
   CancelInput: {fileID: 7040659881675835329, guid: 289c1b55c9541489481df5cc06664110, type: 3}
-  Speed: 500
+  Acceleration: 800
+  MaxSpeed: 5
   JumpPower: 400
-  JumpSound: {fileID: 0}
+  JumpSound: {fileID: 8300000, guid: 183511aa64d1537478eba2fc0f2690e5, type: 3}
 --- !u!114 &4269621343991145030
 MonoBehaviour:
   m_ObjectHideFlags: 0
