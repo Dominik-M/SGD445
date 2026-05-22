@@ -18,6 +18,7 @@ public class GameController : MonoBehaviour
 
     [Header("Settings")]
     [SerializeField] private float TimePerLevel;
+    [SerializeField] private int StartLifes;
 
     private static GameController instance;
     public static GameController I => instance;
@@ -27,6 +28,7 @@ public class GameController : MonoBehaviour
     private int score;
     private float remainingTime;
     private bool gameover, gamecomplete;
+    private int lifesRemaining, deathCounter;
     private GameObject player;
     private GameObject currentLevel;
     private int currentLevelIdx;
@@ -36,6 +38,8 @@ public class GameController : MonoBehaviour
     private AudioSource audioSource;
 
     public int CurrentLevelIndex => currentLevelIdx;
+    public int LifesRemaining => lifesRemaining;
+    public int DeathCounter => deathCounter;
     public float RemainingTime => remainingTime;
     public bool IsGameOver => gameover;
     public bool IsGameComplete => gamecomplete;
@@ -51,9 +55,15 @@ public class GameController : MonoBehaviour
 
     void Start()
     {
+        if (instance != null)
+        {
+            Debug.LogWarning("There is already an active GameController instance");
+        }
         instance = this;
         gameover = false;
         gamecomplete = false;
+        lifesRemaining = StartLifes;
+        deathCounter = 0;
         followerCamera = FindAnyObjectByType<FollowerCamera>();
         // ensure audio source
         if (audioSource == null) audioSource = GetComponent<AudioSource>();
@@ -80,6 +90,7 @@ public class GameController : MonoBehaviour
 
     public void StartLevel(int level)
     {
+        Debug.Log($"StartLevel({level})");
         if (level >= 0 && level < LevelPrefabs.Length)
         {
             currentLevelIdx = level;
@@ -120,16 +131,28 @@ public class GameController : MonoBehaviour
 
     public void Die()
     {
-        PlaySound(LooseSound);
         if (player != null)
         {
+            Debug.Log("Player died");
+            PlaySound(LooseSound);
+            deathCounter++;
+            lifesRemaining--;
             if (PlayerDestroyEffectPrefab) Instantiate(PlayerDestroyEffectPrefab, player.transform.position, Quaternion.identity);
             Destroy(player);
+
+            // Delay the respawn or gameover, but only if enough time is left
+            // Otherwise Gameover will be called by timeout before
+            if (remainingTime > 2)
+            {
+                if (lifesRemaining > 0) Invoke(nameof(Respawn), 2);
+                else Invoke(nameof(GameOver), 2);
+            }
         }
     }
 
     public void Finish()
     {
+        Debug.Log($"Level {currentLevelIdx} Finished");
         PlaySound(WinSound);
         Destroy(player);
         Invoke(nameof(NextLevel), 1);
@@ -170,13 +193,14 @@ public class GameController : MonoBehaviour
         if (trigger.CompareTag("Boundary"))
         {
             Die();
-            if (remainingTime > 2)
-                Invoke(nameof(Respawn), 2);
         }
         else if (trigger.CompareTag("Finish"))
+        {
             Finish();
+        }
         else if (trigger.CompareTag("Pickup"))
         {
+            Debug.Log("Pickup collected");
             PlaySound(PickupSound);
             Destroy(trigger.gameObject);
             Score++;
