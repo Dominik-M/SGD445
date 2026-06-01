@@ -443,17 +443,6 @@
                 },
                 {
                     "name": "",
-                    "id": "da8a194f-2ca9-4a42-856c-dd2a3e8fd027",
-                    "path": "<Keyboard>/enter",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Start",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
                     "id": "b3f66d0b-7751-423f-908b-a11c5bd95930",
                     "path": "<Gamepad>/start",
                     "interactions": "",

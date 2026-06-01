@@ -20,6 +20,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/UTY06D.unity
     guid: 8ccb9bfba1b89cd4c8c8fd0f2763100e
+  - enabled: 1
+    path: Assets/Scenes/UTY07D.unity
+    guid: 7ce01c20d23644b498e5df6a29d39e8a
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 289c1b55c9541489481df5cc06664110, type: 3}
   m_UseUCBPForAssetBundles: 0
