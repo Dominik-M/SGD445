@@ -29,4 +29,9 @@ public class MainMenuController : MonoBehaviour
         SceneManager.LoadScene(sceneIdx);
         loading = false;
     }
+
+    public void OnDeleteButtonClicked()
+    {
+        SaveDataHandler.Delete();
+    }
 }
