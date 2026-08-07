@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MauerGenerator : MonoBehaviour
+public class MauerGenerator : GeneratorBehaviour
 {
     [Header("Das Wuerfel Prefab")]
     [SerializeField] private GameObject cubePrefab;
@@ -30,7 +30,7 @@ public class MauerGenerator : MonoBehaviour
         return positions.ToArray();
     }
 
-    public void GenerateWall()
+    public override void Generate()
     {
         Transform parent = Instantiate(gameObject, transform.parent).transform;
         Vector3 cubeSize = GetCubeSize();

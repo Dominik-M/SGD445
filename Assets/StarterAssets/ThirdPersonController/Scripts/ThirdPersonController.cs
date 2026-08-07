@@ -162,6 +162,7 @@ namespace StarterAssets
             JumpAndGravity();
             GroundedCheck();
             Move();
+            Attack();
         }
 
         private void LateUpdate()
@@ -348,6 +349,16 @@ namespace StarterAssets
             if (_verticalVelocity < _terminalVelocity)
             {
                 _verticalVelocity += Gravity * Time.deltaTime;
+            }
+        }
+
+        private void Attack()
+        {
+            if (_input.attack)
+            {
+                Debug.Log("Interact");
+                InteractionSystem.OnInteract();
+                _input.attack = false;
             }
         }
 
