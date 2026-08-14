@@ -10,6 +10,7 @@ public class PauseMenuController : MonoBehaviour
 
     private Transform content;
     private bool paused;
+    private CursorLockMode prevMode = CursorLockMode.None;
     public bool Paused
     {
         get => paused;
@@ -18,6 +19,13 @@ public class PauseMenuController : MonoBehaviour
             paused = value;
             Time.timeScale = paused ? 0 : 1;
             content.gameObject.SetActive(paused);
+            if (paused)
+            {
+                prevMode = Cursor.lockState;
+                Cursor.lockState = CursorLockMode.None;
+            }
+            else
+                Cursor.lockState = prevMode;
         }
     }
 
