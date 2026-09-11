@@ -150,6 +150,7 @@ GameObject:
   - component: {fileID: 655030411956278804}
   - component: {fileID: 7034567883336286960}
   - component: {fileID: 3031804040216299798}
+  - component: {fileID: 7453085015233505154}
   m_Layer: 5
   m_Name: InventarButton
   m_TagString: Untagged
@@ -273,3 +274,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   text: {fileID: 7543837737591675874}
   button: {fileID: 7034567883336286960}
+--- !u!114 &7453085015233505154
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 970757630152574895}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5163481b1d5fb44fbe1b7a5b869d255, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SelectOnHover

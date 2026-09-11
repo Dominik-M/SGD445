@@ -1,6 +1,10 @@
-public interface IInteractable
+
+namespace PointClick
 {
-    void OnCursorEnter();
-    void OnCursorExit();
-    void OnInteract();
+    public interface IInteractable
+    {
+        void OnCursorEnter();
+        void OnCursorExit();
+        void OnInteract();
+    }
 }

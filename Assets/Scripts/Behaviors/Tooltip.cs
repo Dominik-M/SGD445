@@ -1,32 +1,35 @@
 using UnityEngine;
 
-public class Tooltip : MonoBehaviour
+namespace PointClick
 {
-    private static Tooltip instance;
-
-    [Header("Refrenzen & Setup")]
-    [SerializeField] private TMPro.TextMeshProUGUI text;
-
-    private void Awake()
+    public class Tooltip : MonoBehaviour
     {
-        instance = this;
-        Hide();
-    }
+        private static Tooltip instance;
 
-    public static void Hide()
-    {
-        if (instance != null)
+        [Header("Refrenzen & Setup")]
+        [SerializeField] private TMPro.TextMeshProUGUI text;
+
+        private void Awake()
         {
-            instance.gameObject.SetActive(false);
+            instance = this;
+            Hide();
         }
-    }
 
-    public static void Show(string text)
-    {
-        if (instance != null)
+        public static void Hide()
         {
-            instance.text.text = text;
-            instance.gameObject.SetActive(true);
+            if (instance != null)
+            {
+                instance.gameObject.SetActive(false);
+            }
+        }
+
+        public static void Show(string text)
+        {
+            if (instance != null)
+            {
+                instance.text.text = text;
+                instance.gameObject.SetActive(true);
+            }
         }
     }
 }

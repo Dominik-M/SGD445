@@ -1,36 +1,39 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
-public class GegenstandAnwenden : MonoBehaviour, IInteractable
+namespace PointClick
 {
-    public string bedingung;
-    public int anzahl;
-
-    public void OnCursorEnter()
+    public class GegenstandAnwenden : MonoBehaviour, IInteractable
     {
-        Tooltip.Show("Braucht " + bedingung + (anzahl > 1 ? "x" + anzahl : ""));
-    }
+        public Gegenstand gegenstand;
+        public string bedingung;
+        public int anzahl;
+        public int zustand;
 
-    public void OnCursorExit()
-    {
-        Tooltip.Hide();
-    }
-
-    public void OnInteract()
-    {
-        string gegenstand = Inventar.GehaltenerGegenstand;
-        // Passt dar Gegenstand hier?
-        if (Inventar.PruefeGegenstand(bedingung, anzahl))
+        public void OnCursorEnter()
         {
-            // Verbrauche den Gegenstand
-            if (Inventar.Remove(gegenstand, anzahl))
-            {
-                PopupManager.ShowInfo("Der Gegenstand " + gegenstand + " wurde angewendet.");
-            }
+            Tooltip.Show("Braucht " + bedingung);
         }
-        else
-            PopupManager.ShowWarning("Sie können den Gegenstand " + gegenstand + " hier nicht anwenden.");
+
+        public void OnCursorExit()
+        {
+            Tooltip.Hide();
+        }
+
+        public void OnInteract()
+        {
+            Gegenstand gehalten = Inventar.GehaltenerGegenstand;
+            // Passt dar Gegenstand hier?
+            if (Inventar.PruefeGegenstand(bedingung, 1))
+            {
+                // Verbrauche den Gegenstand
+                if (Inventar.Remove(gehalten.name, 1))
+                {
+                    zustand++;
+                    PopupManager.ShowInfo("Der Gegenstand " + gehalten + " wurde angewendet.");
+                }
+            }
+            else
+                PopupManager.ShowWarning("Sie können den Gegenstand " + gehalten + " hier nicht anwenden.");
+        }
     }
 }

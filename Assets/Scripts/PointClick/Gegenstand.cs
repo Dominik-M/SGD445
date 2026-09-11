@@ -1,20 +1,26 @@
-[System.Serializable]
-public class Gegenstand
+using UnityEngine;
+
+namespace PointClick
 {
-    public string name;
-    public string bedingung;
-    public int anzahl;
-    public int maxAnzahl;
-
-    public override string ToString()
+    [CreateAssetMenu(fileName = "Gegenstand", menuName = "Scriptable Objects/Gegenstand")]
+    public class Gegenstand : ScriptableObject
     {
-        if (anzahl > 1)
-            return name + "\nx" + anzahl.ToString();
-        else return name;
-    }
+        public string bedingung;
+        public int anzahl;
+        public int maxAnzahl;
+        public Sprite icon;
+        public GameObject prefab;
 
-    public bool Equals(Gegenstand other)
-    {
-        return name.Equals(other.name);
+        public override string ToString()
+        {
+            if (anzahl > 1)
+                return name + "\nx" + anzahl.ToString();
+            else return name;
+        }
+
+        public bool Equals(Gegenstand other)
+        {
+            return name.Equals(other.name);
+        }
     }
 }

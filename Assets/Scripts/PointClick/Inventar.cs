@@ -6,310 +6,366 @@ using System.Runtime.Serialization.Formatters.Binary;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.LowLevel;
 
-public class Inventar : MonoBehaviour
+namespace PointClick
 {
-    public const int ANZAHL_SLOTS = 10;
-
-    private static Inventar instance;
-    private void Awake() => instance = this;
-
-
-    [Header("Inventar Slot Button Prefab")]
-    [SerializeField] private GameObject inventarButton;
-
-    [Header("UI Panel des Inventars")]
-    [SerializeField] private GameObject inventarPanel;
-    [Header("Parent Objekt der Inventar Slot Buttons")]
-    [SerializeField] private Transform slotsParent;
-    [Header("Slot des gehaltenen Gegenstandes")]
-    [SerializeField] private TMPro.TextMeshProUGUI gehaltenerGegenstandText;
-
-    [Header("Inventar Öffnen/Schließen Action")]
-    public InputActionReference inventarAction;
-
-    [Header("Die Starter Assets Inputs zur Charaktersteuerung")]
-    public StarterAssetsInputs inputs;
-
-    private readonly Gegenstand[] gegenstaende = new Gegenstand[ANZAHL_SLOTS];
-    private readonly InventarButton[] slots = new InventarButton[ANZAHL_SLOTS];
-    private string savefile;
-
-    private static bool zeigeInventar;
-    public static bool ZeigeInventar
+    public class Inventar : MonoBehaviour
     {
-        get => zeigeInventar;
-        set
+        public const int ANZAHL_SLOTS = 10;
+
+        private static Inventar instance;
+        private void Awake() => instance = this;
+
+
+        [Header("Inventar Slot Button Prefab")]
+        [SerializeField] private GameObject inventarButton;
+
+        [Header("UI Panel des Inventars")]
+        [SerializeField] private GameObject inventarPanel;
+        [Header("Parent Objekt der Inventar Slot Buttons")]
+        [SerializeField] private Transform slotsParent;
+        [Header("Slot des gehaltenen Gegenstandes")]
+        [SerializeField] private TMPro.TextMeshProUGUI gehaltenerGegenstandText;
+        [Header("Parent Transform des gehaltenen Gegenstands")]
+        [SerializeField] private Transform rechteHand;
+
+        [Header("Inventar Öffnen/Schließen Action")]
+        public InputActionReference inventarAction;
+
+        [Header("Die Starter Assets Inputs zur Charaktersteuerung")]
+        public StarterAssetsInputs inputs;
+
+        private static readonly List<Gegenstand> alleGegenstaende = new();
+        private readonly Gegenstand[] gegenstaende = new Gegenstand[ANZAHL_SLOTS];
+        private readonly InventarButton[] slots = new InventarButton[ANZAHL_SLOTS];
+        private string savefile;
+        private WorldData worldData;
+
+        private static bool zeigeInventar;
+        public static bool ZeigeInventar
         {
-            zeigeInventar = value;
-            Time.timeScale = zeigeInventar ? 0 : 1;
-            if (instance != null)
+            get => zeigeInventar;
+            set
             {
-                if (instance.inventarPanel != null)
-                    instance.inventarPanel.SetActive(zeigeInventar);
-                if (instance.inputs != null)
+                zeigeInventar = value;
+                Time.timeScale = zeigeInventar ? 0 : 1;
+                if (instance != null)
                 {
-                    instance.inputs.cursorInputForLook = !zeigeInventar;
+                    if (instance.inventarPanel != null)
+                        instance.inventarPanel.SetActive(zeigeInventar);
+                    if (instance.inputs != null)
+                    {
+                        instance.inputs.cursorInputForLook = !zeigeInventar;
+                    }
+                    Cursor.lockState = zeigeInventar ? CursorLockMode.None : CursorLockMode.Locked;
                 }
-                Cursor.lockState = zeigeInventar ? CursorLockMode.None : CursorLockMode.Locked;
             }
         }
-    }
 
-    private static string gehaltenerGegenstand;
-    public static string GehaltenerGegenstand
-    {
-        get => gehaltenerGegenstand;
-        set
+        private static Gegenstand gehaltenerGegenstand;
+        public static Gegenstand GehaltenerGegenstand
         {
-            gehaltenerGegenstand = value;
-            if (instance != null && instance.gehaltenerGegenstandText != null)
+            get => gehaltenerGegenstand;
+            set
             {
-                if (gehaltenerGegenstand != null)
-                    instance.gehaltenerGegenstandText.text = "In der Hand: " + gehaltenerGegenstand;
-                else
-                    instance.gehaltenerGegenstandText.text = "Kein Gegenstand in der Hand";
+                gehaltenerGegenstand = value;
+                if (instance != null)
+                {
+                    if (instance.gehaltenerGegenstandText != null)
+                    {
+                        if (gehaltenerGegenstand != null)
+                            instance.gehaltenerGegenstandText.text = "In der Hand: " + gehaltenerGegenstand;
+                        else
+                            instance.gehaltenerGegenstandText.text = "Kein Gegenstand in der Hand";
+                        if (instance.rechteHand != null)
+                        {
+                            foreach (Transform child in instance.rechteHand) Destroy(child.gameObject);
+                            if (gehaltenerGegenstand != null)
+                                Instantiate(gehaltenerGegenstand.prefab, instance.rechteHand).transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+                        }
+                    }
+                }
             }
         }
-    }
 
-    void Start()
-    {
-        BuildInventorySlots();
-        Init();
-        // Inventar am Anfang nicht zeigen
-        ZeigeInventar = false;
-    }
-
-    void BuildInventorySlots()
-    {
-        for (int i = 0; i < gegenstaende.Length; i++)
+        void Start()
         {
-            var slot = Instantiate(inventarButton, slotsParent, false).GetComponent<InventarButton>();
-            if (i == 0)
-                slot.AddComponent<SelectOnEnable>();
-            slots[i] = slot;
+            LoadResources();
+            BuildInventorySlots();
+            Init();
+            // Inventar am Anfang nicht zeigen
+            ZeigeInventar = false;
         }
-    }
 
-    void Init()
-    {
-        savefile = Path.Combine(Application.persistentDataPath, "gegenstaende.bin");
-        // Die Liste laden bzw. neu erzeugen
-        ListeLaden();
-        // Inventar aktualisieren
-        UpdateSlots();
-        GehaltenerGegenstand = null;
-
-        // TODO Spielerposition setzen
-
-        // TODO Szenen Gegenstände verteilen
-    }
-
-    private void OnEnable()
-    {
-        inventarAction.action?.Enable();
-        Cursor.lockState = CursorLockMode.Locked;
-    }
-
-    private void OnDisable()
-    {
-        inventarAction.action?.Disable();
-        Cursor.lockState = CursorLockMode.None;
-    }
-
-    void Update()
-    {
-        if (inventarAction.action.WasPressedThisFrame())
-            ZeigeInventar = !ZeigeInventar;
-    }
-
-    void UpdateSlots()
-    {
-        for (int i = 0; i < gegenstaende.Length; i++)
+        void LoadResources()
         {
-            slots[i].Ggst = gegenstaende[i];
+            alleGegenstaende.Clear();
+            alleGegenstaende.AddRange(Resources.LoadAll<Gegenstand>("Items"));
         }
-        ListeSpeichern();
-    }
 
-    void ListeLaden()
-    {
-        bool ok = false;
-        if (File.Exists(savefile))
+        void BuildInventorySlots()
         {
-            // Eine neue instanz von FileStream erzeugen
-            // Die Datei wird zum lesen geöffnet
-            FileStream meinFileStream = new FileStream(savefile, FileMode.Open, FileAccess.Read);
-            // Eine instanz von BinaryFormatter erzeugen
+            for (int i = 0; i < gegenstaende.Length; i++)
+            {
+                var slot = Instantiate(inventarButton, slotsParent, false).GetComponent<InventarButton>();
+                if (i == 0)
+                    slot.AddComponent<SelectOnEnable>();
+                slots[i] = slot;
+            }
+        }
+
+        void Init()
+        {
+            savefile = Path.Combine(Application.persistentDataPath, "gegenstaende.bin");
+            // Die Liste laden bzw. neu erzeugen
+            ListeLaden();
+            // Inventar aktualisieren
+            UpdateSlots();
+            GehaltenerGegenstand = null;
+
+            // Welt Zustand laden
+            worldData = new WorldData(Path.Combine(Application.persistentDataPath, "welt.bin"));
+            worldData.Load();
+
+            // TODO Spielerposition setzen
+
+            // TODO Szenen Gegenstände verteilen
+        }
+
+        private void OnEnable()
+        {
+            inventarAction.action?.Enable();
+            Cursor.lockState = CursorLockMode.Locked;
+        }
+
+        private void OnDisable()
+        {
+            inventarAction.action?.Disable();
+            Cursor.lockState = CursorLockMode.None;
+        }
+
+        void Update()
+        {
+            if (inventarAction.action.WasPressedThisFrame())
+                ZeigeInventar = !ZeigeInventar;
+        }
+
+        void UpdateSlots()
+        {
+            for (int i = 0; i < gegenstaende.Length; i++)
+            {
+                slots[i].Ggst = gegenstaende[i];
+            }
+            ListeSpeichern();
+        }
+
+        void ListeLaden()
+        {
+            bool ok = false;
+            if (File.Exists(savefile))
+            {
+                // Eine neue instanz von FileStream erzeugen
+                // Die Datei wird zum lesen geöffnet
+                FileStream meinFileStream = new FileStream(savefile, FileMode.Open, FileAccess.Read);
+                // Eine instanz von BinaryFormatter erzeugen
+                BinaryFormatter binaryFormatter = new BinaryFormatter();
+                // Die Daten deserialisieren und ablegen
+                GegenstandData[] geladeneGegenstaende;
+                try
+                {
+                    geladeneGegenstaende = binaryFormatter.Deserialize(meinFileStream) as GegenstandData[];
+                    for (int i = 0; i < ANZAHL_SLOTS; i++)
+                        if (i < geladeneGegenstaende.Length && geladeneGegenstaende[i] != null)
+                        {
+                            gegenstaende[i] = FindGegenstand(geladeneGegenstaende[i].gegenstandsName);
+                            if (gegenstaende[i] != null)
+                                gegenstaende[i].anzahl = geladeneGegenstaende[i].anzahl;
+                        }
+                        else
+                            gegenstaende[i] = null;
+                    Debug.Log("Gegenstände geladen aus " + savefile);
+                    ok = true;
+                }
+                catch (Exception ex) { Debug.LogWarning("Fehler beim Laden: " + ex); }
+
+                meinFileStream.Close();
+            }
+
+            if (!ok)
+            {
+                // sonst 10 leere Einträge erzeugen
+                Debug.Log("Kein savefile vorhanden, initialisiere Gegenstände");
+                for (int i = 0; i < ANZAHL_SLOTS; i++)
+                    gegenstaende[i] = null;
+            }
+        }
+
+        void ListeSpeichern()
+        {
+            // Die Speicherdaten aus den Inventargegenständen extrahieren
+            GegenstandData[] gegenstaendDaten = new GegenstandData[gegenstaende.Length];
+            for (int i = 0; i < gegenstaende.Length; i++)
+            {
+                if (gegenstaende[i] != null)
+                {
+                    gegenstaendDaten[i] = new GegenstandData();
+                    gegenstaendDaten[i].gegenstandsName = gegenstaende[i].name;
+                    gegenstaendDaten[i].anzahl = gegenstaende[i].anzahl;
+                }
+                else
+                {
+                    gegenstaendDaten[i] = null;
+                }
+            }
+            // Eine neue Instanz von FileStream erzeugen
+            FileStream meinFileStream = new FileStream(savefile, FileMode.Create);
+            // Eine Instanz von BinaryFormatter erzeugen
             BinaryFormatter binaryFormatter = new BinaryFormatter();
-            // Die Daten deserialisieren und ablegen
-            Gegenstand[] geladeneGegenstaende;
+            // Die Daten speichern. Dazu wird einfach die Liste serialisiert
+            binaryFormatter.Serialize(meinFileStream, gegenstaendDaten);
+            meinFileStream.Close();
+            Debug.Log("Gegenstände gespeichert unter " + savefile);
+        }
+
+        public void DeleteData()
+        {
             try
             {
-                geladeneGegenstaende = binaryFormatter.Deserialize(meinFileStream) as Gegenstand[];
-                for (int i = 0; i < ANZAHL_SLOTS; i++)
-                    if (i < geladeneGegenstaende.Length)
-                        gegenstaende[i] = geladeneGegenstaende[i];
-                    else
-                        gegenstaende[i] = null;
-                Debug.Log("Gegenstände geladen aus " + savefile);
-                ok = true;
+                File.Delete(savefile);
+                Debug.Log("Inventar Datei gelöscht");
+                worldData.Delete();
+                Init();
             }
-            catch (Exception) { Debug.LogWarning("Fehler beim Laden"); }
-
-            meinFileStream.Close();
+            catch (Exception) { Debug.LogError("Kann Speicherstand nicht löschen. Datei nicht vorhanden?"); }
         }
 
-        if (!ok)
+        public static bool Add(Gegenstand gegenstand)
         {
-            // sonst 10 leere Einträge erzeugen
-            Debug.Log("Kein savefile vorhanden, initialisiere Gegenstände");
-            for (int i = 0; i < ANZAHL_SLOTS; i++)
-                gegenstaende[i] = null;
-        }
-    }
-
-    void ListeSpeichern()
-    {
-        // Eine neue Instanz von FileStream erzeugen
-        FileStream meinFileStream = new FileStream(savefile, FileMode.Create);
-        // Eine Instanz von BinaryFormatter erzeugen
-        BinaryFormatter binaryFormatter = new BinaryFormatter();
-        // Die Daten speichern. Dazu wird einfach die Liste serialisiert
-        binaryFormatter.Serialize(meinFileStream, gegenstaende);
-        meinFileStream.Close();
-        Debug.Log("Gegenstände gespeichert unter " + savefile);
-    }
-
-    public void DeleteData()
-    {
-        try {
-            File.Delete(savefile);
-            Debug.Log("Spielstand gelöscht");
-            Init();
-        }
-        catch (Exception) { Debug.LogError("Kann Speicherstand nicht löschen. Datei nicht vorhanden?"); }
-        }
-
-    public static bool Add(Gegenstand gegenstand)
-    {
-        if (instance == null)
-        {
-            PopupManager.ShowError("Inventar nicht initialisiert!");
-            return false;
-        }
-        if (gegenstand == null)
-        {
-            PopupManager.ShowError("Ungültiger Gegenstand!");
-            return false;
-        }
-
-        // Zuerst prüfen Gleicher Gegenstand schon vorhanden und Anzahl erhöhen
-        for (int i = 0; i < instance.gegenstaende.Length; i++)
-        {
-            if (instance.gegenstaende[i] != null
-                && gegenstand.name.Equals(instance.gegenstaende[i].name))
+            if (instance == null)
             {
-                if (instance.gegenstaende[i].anzahl + gegenstand.anzahl <= gegenstand.maxAnzahl)
+                PopupManager.ShowError("Inventar nicht initialisiert!");
+                return false;
+            }
+            if (gegenstand == null)
+            {
+                PopupManager.ShowError("Ungültiger Gegenstand!");
+                return false;
+            }
+
+            // Zuerst prüfen Gleicher Gegenstand schon vorhanden und Anzahl erhöhen
+            for (int i = 0; i < instance.gegenstaende.Length; i++)
+            {
+                if (instance.gegenstaende[i] != null
+                    && gegenstand.name.Equals(instance.gegenstaende[i].name))
                 {
-                    instance.gegenstaende[i].anzahl += gegenstand.anzahl;
+                    if (instance.gegenstaende[i].anzahl + gegenstand.anzahl <= gegenstand.maxAnzahl)
+                    {
+                        instance.gegenstaende[i].anzahl += gegenstand.anzahl;
+                        instance.UpdateSlots();
+                        return true;
+                    }
+                    else
+                    {
+                        PopupManager.ShowWarning("Kann nicht noch mehr davon tragen");
+                        return false;
+                    }
+                }
+            }
+            // Neuer Gegenstand, suche freien Slot
+            for (int i = 0; i < instance.gegenstaende.Length; i++)
+            {
+                if (instance.gegenstaende[i] == null)
+                {
+                    instance.gegenstaende[i] = gegenstand;
+                    gegenstand.anzahl = 1;
                     instance.UpdateSlots();
                     return true;
                 }
-                else
-                {
-                    PopupManager.ShowWarning("Kann nicht noch mehr davon tragen");
-                    return false;
-                }
             }
-        }
-        // Neuer Gegenstand, suche freien Slot
-        for (int i = 0; i < instance.gegenstaende.Length; i++)
-        {
-            if (instance.gegenstaende[i] == null)
-            {
-                instance.gegenstaende[i] = gegenstand;
-                instance.UpdateSlots();
-                return true;
-            }
-        }
-        PopupManager.ShowWarning("Inventar voll!");
-        return false;
-    }
-
-    public static bool Remove(string gegenstandsName, int anzahl)
-    {
-        if (instance == null)
-        {
-            PopupManager.ShowError("Inventar nicht initialisiert!");
-            return false;
-        }
-        if (string.IsNullOrEmpty(gegenstandsName))
-        {
-            PopupManager.ShowError("Ungültiger Gegenstand!");
+            PopupManager.ShowWarning("Inventar voll!");
             return false;
         }
 
-        for (int i = 0; i < instance.gegenstaende.Length; i++)
+        public static bool Remove(string gegenstandsName, int anzahl)
         {
-            if (instance.gegenstaende[i] != null
-                && gegenstandsName.Equals(instance.gegenstaende[i].name))
+            if (instance == null)
             {
-                if (instance.gegenstaende[i].anzahl < anzahl)
-                {
-                    PopupManager.ShowWarning($"Nicht genug {gegenstandsName} im Inventar. Braucht {anzahl}");
-
-                }
-                instance.gegenstaende[i].anzahl -= anzahl;
-                if (instance.gegenstaende[i].anzahl <= 0)
-                    instance.gegenstaende[i] = null;
-                instance.UpdateSlots();
-                return true;
+                PopupManager.ShowError("Inventar nicht initialisiert!");
+                return false;
             }
-        }
-        PopupManager.ShowWarning(gegenstandsName + " nicht im Inventar!");
-        return false;
-    }
+            if (string.IsNullOrEmpty(gegenstandsName))
+            {
+                PopupManager.ShowError("Ungültiger Gegenstand!");
+                return false;
+            }
 
-    public static Gegenstand Get(string gegenstandsName)
-    {
-        if (instance == null)
-        {
-            PopupManager.ShowError("Inventar nicht initialisiert!");
-            return null;
+            for (int i = 0; i < instance.gegenstaende.Length; i++)
+            {
+                if (instance.gegenstaende[i] != null
+                    && gegenstandsName.Equals(instance.gegenstaende[i].name))
+                {
+                    if (instance.gegenstaende[i].anzahl < anzahl)
+                    {
+                        PopupManager.ShowWarning($"Nicht genug {gegenstandsName} im Inventar. Braucht {anzahl}");
+
+                    }
+                    instance.gegenstaende[i].anzahl -= anzahl;
+                    if (instance.gegenstaende[i].anzahl <= 0)
+                        instance.gegenstaende[i] = null;
+                    instance.UpdateSlots();
+                    return true;
+                }
+            }
+            PopupManager.ShowWarning(gegenstandsName + " nicht im Inventar!");
+            return false;
         }
-        if (string.IsNullOrEmpty(gegenstandsName))
+
+        public static Gegenstand Get(string gegenstandsName)
         {
-            PopupManager.ShowError("Ungültiger Gegenstand!");
+            if (instance == null)
+            {
+                PopupManager.ShowError("Inventar nicht initialisiert!");
+                return null;
+            }
+            if (string.IsNullOrEmpty(gegenstandsName))
+            {
+                PopupManager.ShowError("Ungültiger Gegenstand!");
+                return null;
+            }
+
+            for (int i = 0; i < instance.gegenstaende.Length; i++)
+            {
+                if (instance.gegenstaende[i] != null
+                    && gegenstandsName.Equals(instance.gegenstaende[i].name))
+                {
+                    return instance.gegenstaende[i];
+                }
+            }
+            Debug.LogWarning($"Inventar.Get({gegenstandsName}): Nicht gefunden");
             return null;
         }
 
-        for (int i = 0; i < instance.gegenstaende.Length; i++)
+        public static bool PruefeGegenstand(string bedingung, int anzahl)
         {
-            if (instance.gegenstaende[i] != null
-                && gegenstandsName.Equals(instance.gegenstaende[i].name))
+            Gegenstand gehalten = GehaltenerGegenstand;
+            if (gehalten == null)
+                return false;
+
+            string gehalteneBedingung = gehalten.bedingung;
+            Debug.Log($"Teste {gehalten} mit {gehalteneBedingung}");
+            if (bedingung == gehalteneBedingung)
             {
-                return instance.gegenstaende[i];
+                return true;
             }
-        }
-        Debug.LogWarning($"Inventar.Get({gegenstandsName}): Nicht gefunden");
-        return null;
-    }
-
-    public static bool PruefeGegenstand(string bedingung, int anzahl)
-    {
-        Gegenstand gehalten = Get(GehaltenerGegenstand);
-        if (gehalten == null)
             return false;
-
-        string gehalteneBedingung = gehalten.bedingung;
-        Debug.Log($"Teste {gehalten} mit {gehalteneBedingung}");
-        if (bedingung == gehalteneBedingung)
-        {
-            return true;
         }
-        return false;
+
+        public static Gegenstand FindGegenstand(string name)
+        {
+            foreach (Gegenstand g in alleGegenstaende)
+                if (g.name == name) return g;
+            Debug.LogWarning("Cannot find item: " + name);
+            return null;
+        }
     }
 }

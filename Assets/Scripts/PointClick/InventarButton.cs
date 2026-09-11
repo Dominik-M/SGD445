@@ -1,75 +1,78 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class InventarButton : MonoBehaviour
+namespace PointClick
 {
-    [Header("Refrenzen & Setup")]
-    [SerializeField] private TMPro.TextMeshProUGUI text;
-    [SerializeField] private Button button;
-
-    private Gegenstand ggst;
-
-    public Gegenstand Ggst
+    public class InventarButton : MonoBehaviour
     {
-        get => ggst;
-        set
-        {
-            ggst = value;
-            UpdateText();
-        }
-    }
+        [Header("Refrenzen & Setup")]
+        [SerializeField] private TMPro.TextMeshProUGUI text;
+        [SerializeField] private Button button;
 
-    void Start()
-    {
-        UpdateText();
-        button.onClick.AddListener(OnClick);
-    }
+        private Gegenstand ggst;
 
-    void UpdateText()
-    {
-        if (Ggst == null)
+        public Gegenstand Ggst
         {
-            text.text = "Leer";
-        }
-        else
-        {
-            text.text = Ggst.ToString();
-        }
-    }
-
-    void OnClick()
-    {
-        if (string.IsNullOrEmpty(Inventar.GehaltenerGegenstand))
-        {
-            if (Ggst != null)
+            get => ggst;
+            set
             {
-                // Gegenstand aufnehmen
-                Inventar.GehaltenerGegenstand = Ggst.name;
-                // Falls gehaltener Gegenstand wie ein eigener Inventar Slot ist, entferne ihn beim Aufnehmen
-                //Inventar.Remove(Ggst.name);
+                ggst = value;
+                UpdateText();
             }
         }
-        else
+
+        void Start()
+        {
+            UpdateText();
+            button.onClick.AddListener(OnClick);
+        }
+
+        void UpdateText()
         {
             if (Ggst == null)
             {
-                // Leerer Slot, lege Gegenstand ab
-                //if (Inventar.Add(Inventar.GehaltenerGegenstand))
-                    Inventar.GehaltenerGegenstand = null;
+                text.text = "Leer";
             }
             else
             {
-                if (Ggst.name.Equals(Inventar.GehaltenerGegenstand))
+                text.text = Ggst.ToString();
+            }
+        }
+
+        void OnClick()
+        {
+            if (Inventar.GehaltenerGegenstand==null)
+            {
+                if (Ggst != null)
                 {
-                    // Gleicher Gegenstand, auf Stapel legen
-                    //if (Inventar.Add(Ggst.name))
-                        Inventar.GehaltenerGegenstand = null;
+                    // Gegenstand aufnehmen
+                    Inventar.GehaltenerGegenstand = Ggst;
+                    // Falls gehaltener Gegenstand wie ein eigener Inventar Slot ist, entferne ihn beim Aufnehmen
+                    //Inventar.Remove(Ggst.name);
+                }
+            }
+            else
+            {
+                if (Ggst == null)
+                {
+                    // Leerer Slot, lege Gegenstand ab
+                    //if (Inventar.Add(Inventar.GehaltenerGegenstand))
+                    Inventar.GehaltenerGegenstand = null;
                 }
                 else
                 {
-                    // Kombinieren
-                    PopupManager.ShowInfo("Kombiniere " + Ggst + " mit " + Inventar.GehaltenerGegenstand);
-                    // TODO
+                    if (Ggst.name.Equals(Inventar.GehaltenerGegenstand))
+                    {
+                        // Gleicher Gegenstand, auf Stapel legen
+                        //if (Inventar.Add(Ggst.name))
+                        Inventar.GehaltenerGegenstand = null;
+                    }
+                    else
+                    {
+                        // Kombinieren
+                        PopupManager.ShowInfo("Kombiniere " + Ggst + " mit " + Inventar.GehaltenerGegenstand);
+                        // TODO
+                    }
                 }
             }
         }

@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class Labyrinth : GeneratorBehaviour
 {
@@ -84,13 +83,13 @@ public class Labyrinth : GeneratorBehaviour
                 for (int z = 0; z < laenge; z++)
                 {
                     Transform floor = Instantiate(floorPrefab, floorParent, false).transform;
-                    floor.transform.localPosition = new Vector3((x - breite / 2 + 0.5f) * wandbreite, 0, (z - laenge / 2 + 0.5f) * wandbreite);
+                    floor.transform.localPosition = new Vector3((x - breite / 2f + 0.5f) * wandbreite, 0, (z - laenge / 2f + 0.5f) * wandbreite);
                     // Nur auf der letzten Etage eine Decke ziehen
                     // Bei allen anderen ist die Decke der Boden der nächsten Etage
                     if (y == etagen - 1)
                     {
                         Transform ceiling = Instantiate(floorPrefab, floorParent, false).transform;
-                        ceiling.transform.localPosition = new Vector3((x - breite / 2 + 0.5f) * wandbreite, wandhoehe, (z - laenge / 2 + 0.5f) * wandbreite);
+                        ceiling.transform.localPosition = new Vector3((x - breite / 2f + 0.5f) * wandbreite, wandhoehe, (z - laenge / 2f + 0.5f) * wandbreite);
                     }
                 }
 
@@ -100,8 +99,8 @@ public class Labyrinth : GeneratorBehaviour
             wallsParent.localPosition = Vector3.zero;
             for (int x = 0; x < breite; x++)
             {
-                float neuePosX = (x - breite / 2) * wandbreite + wanddicke;
-                float neuePosZ = laenge / 2 * wandbreite;
+                float neuePosX = (x - breite / 2f) * wandbreite + wanddicke;
+                float neuePosZ = laenge / 2f * wandbreite;
                 // Oben
                 GameObject wall = Instantiate(wallPrefab, wallsParent, false);
                 wall.transform.localPosition = new Vector3(neuePosX, 0, neuePosZ);
@@ -113,8 +112,8 @@ public class Labyrinth : GeneratorBehaviour
             }
             for (int z = 1; z <= laenge; z++)
             {
-                float neuePosX = -breite / 2 * wandbreite;
-                float neuePosZ = (z - laenge / 2) * wandbreite - wanddicke;
+                float neuePosX = -breite / 2f * wandbreite;
+                float neuePosZ = (z - laenge / 2f) * wandbreite - wanddicke;
                 // Links
                 GameObject wall = Instantiate(wallPrefab, wallsParent, false);
                 wall.transform.localPosition = new Vector3(neuePosX, 0, neuePosZ);
@@ -129,13 +128,13 @@ public class Labyrinth : GeneratorBehaviour
             // Innenwände
             for (int x = 1; x < breite-1; x++)
             {
-                for (int z = 2; z < laenge; z++)
+                for (int z = 1; z < laenge; z++)
                 {
                     GameObject wall = Instantiate(wallPrefab, wallsParent, false);
 
                     // Die neue Position zwischenspeichern
-                    float neuePosX = (x - breite / 2) * wandbreite + wanddicke;
-                    float neuePosZ = (z - laenge / 2) * wandbreite - wanddicke;
+                    float neuePosX = (x - breite / 2f) * wandbreite;
+                    float neuePosZ = (z - laenge / 2f) * wandbreite;
 
                     // Die neue Position setzen
                     wall.transform.localPosition = new Vector3(neuePosX, 0, neuePosZ);
