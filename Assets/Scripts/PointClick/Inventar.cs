@@ -1,21 +1,27 @@
 using StarterAssets;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 namespace PointClick
 {
     public class Inventar : MonoBehaviour
     {
         public const int ANZAHL_SLOTS = 10;
+        public const float AUTOSAVE_INTERVAL = 2;
+
+        private string savefileItems;
+        // Sicherstellen, dass es eine Welt Datei pro Szene gibt
+        private string savefileWorld;
 
         private static Inventar instance;
         private void Awake() => instance = this;
-
 
         [Header("Inventar Slot Button Prefab")]
         [SerializeField] private GameObject inventarButton;
@@ -77,19 +83,24 @@ namespace PointClick
                             instance.gehaltenerGegenstandText.text = "In der Hand: " + gehaltenerGegenstand;
                         else
                             instance.gehaltenerGegenstandText.text = "Kein Gegenstand in der Hand";
-                        if (instance.rechteHand != null)
-                        {
-                            foreach (Transform child in instance.rechteHand) Destroy(child.gameObject);
-                            if (gehaltenerGegenstand != null)
-                                Instantiate(gehaltenerGegenstand.prefab, instance.rechteHand).transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
-                        }
+                    }
+                    if (instance.rechteHand != null)
+                    {
+                        foreach (Transform child in instance.rechteHand) Destroy(child.gameObject);
+                        if (gehaltenerGegenstand != null)
+                            Instantiate(gehaltenerGegenstand.prefab, instance.rechteHand).transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
                     }
                 }
             }
         }
 
+        private Coroutine autoSaveRoutine;
+
         void Start()
         {
+            savefileItems = "gegenstaende.bin";
+            // Sicherstellen, dass es eine Welt Datei pro Szene gibt
+            savefileWorld = "welt" + SceneManager.GetActiveScene().buildIndex + ".bin";
             LoadResources();
             BuildInventorySlots();
             Init();
@@ -116,7 +127,7 @@ namespace PointClick
 
         void Init()
         {
-            savefile = Path.Combine(Application.persistentDataPath, "gegenstaende.bin");
+            savefile = Path.Combine(Application.persistentDataPath, savefileItems);
             // Die Liste laden bzw. neu erzeugen
             ListeLaden();
             // Inventar aktualisieren
@@ -124,24 +135,28 @@ namespace PointClick
             GehaltenerGegenstand = null;
 
             // Welt Zustand laden
-            worldData = new WorldData(Path.Combine(Application.persistentDataPath, "welt.bin"));
+            worldData = new WorldData(Path.Combine(Application.persistentDataPath, savefileWorld));
             worldData.Load();
 
-            // TODO Spielerposition setzen
-
-            // TODO Szenen Gegenstände verteilen
+            // Spielerposition setzen
+            var player = GameObject.FindGameObjectWithTag("Player");
+            if (player != null)
+                player.transform.position = new Vector3(worldData.playerX, worldData.playerY, worldData.playerZ);
         }
 
         private void OnEnable()
         {
             inventarAction.action?.Enable();
             Cursor.lockState = CursorLockMode.Locked;
+            autoSaveRoutine = StartCoroutine(AutoSaveLoop());
         }
 
         private void OnDisable()
         {
             inventarAction.action?.Disable();
             Cursor.lockState = CursorLockMode.None;
+            if (autoSaveRoutine != null)
+                StopCoroutine(autoSaveRoutine);
         }
 
         void Update()
@@ -150,13 +165,22 @@ namespace PointClick
                 ZeigeInventar = !ZeigeInventar;
         }
 
+        IEnumerator AutoSaveLoop()
+        {
+            while (true)
+            {
+                yield return new WaitForSeconds(AUTOSAVE_INTERVAL);
+                worldData.Save();
+                ListeSpeichern();
+            }
+        }
+
         void UpdateSlots()
         {
             for (int i = 0; i < gegenstaende.Length; i++)
             {
                 slots[i].Ggst = gegenstaende[i];
             }
-            ListeSpeichern();
         }
 
         void ListeLaden()
@@ -208,9 +232,11 @@ namespace PointClick
             {
                 if (gegenstaende[i] != null)
                 {
-                    gegenstaendDaten[i] = new GegenstandData();
-                    gegenstaendDaten[i].gegenstandsName = gegenstaende[i].name;
-                    gegenstaendDaten[i].anzahl = gegenstaende[i].anzahl;
+                    gegenstaendDaten[i] = new GegenstandData
+                    {
+                        gegenstandsName = gegenstaende[i].name,
+                        anzahl = gegenstaende[i].anzahl
+                    };
                 }
                 else
                 {
@@ -234,7 +260,8 @@ namespace PointClick
                 File.Delete(savefile);
                 Debug.Log("Inventar Datei gelöscht");
                 worldData.Delete();
-                Init();
+                // Szene neu laden
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
             }
             catch (Exception) { Debug.LogError("Kann Speicherstand nicht löschen. Datei nicht vorhanden?"); }
         }
@@ -311,7 +338,11 @@ namespace PointClick
                     }
                     instance.gegenstaende[i].anzahl -= anzahl;
                     if (instance.gegenstaende[i].anzahl <= 0)
+                    {
+                        if (instance.gegenstaende[i].Equals(gehaltenerGegenstand))
+                            GehaltenerGegenstand = null;
                         instance.gegenstaende[i] = null;
+                    }
                     instance.UpdateSlots();
                     return true;
                 }

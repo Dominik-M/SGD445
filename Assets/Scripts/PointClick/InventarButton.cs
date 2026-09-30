@@ -61,7 +61,7 @@ namespace PointClick
                 }
                 else
                 {
-                    if (Ggst.name.Equals(Inventar.GehaltenerGegenstand))
+                    if (Ggst.Equals(Inventar.GehaltenerGegenstand))
                     {
                         // Gleicher Gegenstand, auf Stapel legen
                         //if (Inventar.Add(Ggst.name))

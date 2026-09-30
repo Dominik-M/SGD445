@@ -8,5 +8,6 @@ namespace PointClick
         public int anzahl = 0;
         public float x = 0, y = 0, z = 0;
         public int zustand = 0;
+        public string objectId;
     }
 }

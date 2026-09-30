@@ -9,7 +9,7 @@ namespace PointClick
     public class WorldData
     {
         readonly string savefile;
-        float playerX, playerY, playerZ;
+        public float playerX, playerY, playerZ;
         GegenstandData[] gegenstaendeAufheben;
         GegenstandData[] gegenstaendeAnwenden;
 
@@ -21,33 +21,42 @@ namespace PointClick
         public void Save()
         {
             // Szenen Objekte beschaffen
-            Transform player = GameObject.FindWithTag("Player").transform;
+            var player = GameObject.FindWithTag("Player");
             GegenstandAufheben[] gegenstandAufhebenScene = GameObject.FindObjectsByType<GegenstandAufheben>(FindObjectsSortMode.None);
             GegenstandAnwenden[] gegenstandAnwendenScene = GameObject.FindObjectsByType<GegenstandAnwenden>(FindObjectsSortMode.None);
 
             // Daten extrahieren
-            playerX = player.position.x;
-            playerY = player.position.y;
-            playerZ = player.position.z;
+            if (player != null)
+            {
+                playerX = player.transform.position.x;
+                playerY = player.transform.position.y;
+                playerZ = player.transform.position.z;
+            }
             gegenstaendeAufheben = new GegenstandData[gegenstandAufhebenScene.Length];
             for (int i = 0; i < gegenstaendeAufheben.Length; i++)
             {
-                gegenstaendeAufheben[i] = new GegenstandData();
-                gegenstaendeAufheben[i].x = gegenstandAufhebenScene[i].transform.position.x;
-                gegenstaendeAufheben[i].y = gegenstandAufhebenScene[i].transform.position.y;
-                gegenstaendeAufheben[i].z = gegenstandAufhebenScene[i].transform.position.z;
-                gegenstaendeAufheben[i].gegenstandsName = gegenstandAufhebenScene[i].gegenstand.name;
+                gegenstaendeAufheben[i] = new GegenstandData
+                {
+                    x = gegenstandAufhebenScene[i].transform.position.x,
+                    y = gegenstandAufhebenScene[i].transform.position.y,
+                    z = gegenstandAufhebenScene[i].transform.position.z,
+                    gegenstandsName = gegenstandAufhebenScene[i].gegenstand.name
+                };
             }
             gegenstaendeAnwenden = new GegenstandData[gegenstandAnwendenScene.Length];
             for (int i = 0; i < gegenstaendeAnwenden.Length; i++)
             {
-                gegenstaendeAnwenden[i] = new GegenstandData();
-                gegenstaendeAnwenden[i].x = gegenstandAnwendenScene[i].transform.position.x;
-                gegenstaendeAnwenden[i].y = gegenstandAnwendenScene[i].transform.position.y;
-                gegenstaendeAnwenden[i].z = gegenstandAnwendenScene[i].transform.position.z;
-                gegenstaendeAnwenden[i].bedingung = gegenstandAnwendenScene[i].bedingung;
-                gegenstaendeAnwenden[i].anzahl = gegenstandAnwendenScene[i].anzahl;
-                gegenstaendeAnwenden[i].zustand = gegenstandAnwendenScene[i].zustand;
+                gegenstaendeAnwenden[i] = new GegenstandData
+                {
+                    x = gegenstandAnwendenScene[i].transform.position.x,
+                    y = gegenstandAnwendenScene[i].transform.position.y,
+                    z = gegenstandAnwendenScene[i].transform.position.z,
+                    bedingung = gegenstandAnwendenScene[i].bedingung,
+                    anzahl = gegenstandAnwendenScene[i].anzahl,
+                    zustand = gegenstandAnwendenScene[i].Zustand,
+                    objectId = gegenstandAnwendenScene[i].SaveId
+                };
+                Debug.Log($"WorldData.gegenstaendeAnwenden[{i}]: ID={gegenstaendeAnwenden[i].objectId}");
             }
 
             // Daten in Datei schreiben
@@ -85,41 +94,48 @@ namespace PointClick
                 meinFileStream.Close();
             }
 
-            if (ok)
-            {
-                // Alte Objekte löschen
-                GegenstandAufheben[] gegenstandAufhebenScene = GameObject.FindObjectsByType<GegenstandAufheben>(FindObjectsSortMode.None);
-                GegenstandAnwenden[] gegenstandAnwendenScene = GameObject.FindObjectsByType<GegenstandAnwenden>(FindObjectsSortMode.None);
-                foreach (GegenstandAufheben gegenstand in gegenstandAufhebenScene)
-                    GameObject.Destroy(gegenstand.gameObject);
-                foreach (GegenstandAnwenden gegenstand in gegenstandAnwendenScene)
-                    GameObject.Destroy(gegenstand.gameObject);
-
-                // Neue Objekte erstellen
-                foreach (GegenstandData data in gegenstaendeAufheben)
-                {
-                    Gegenstand gegenstand = Inventar.Get(data.gegenstandsName);
-                    var obj = GameObject.Instantiate(gegenstand.prefab);
-                    obj.transform.position = new Vector3(data.x, data.y, data.z);
-                    var script = obj.AddComponent<GegenstandAufheben>();
-                    script.gegenstand = gegenstand;
-                }
-                foreach (GegenstandData data in gegenstaendeAnwenden)
-                {
-                    Gegenstand gegenstand = Inventar.Get(data.gegenstandsName);
-                    var obj = GameObject.Instantiate(gegenstand.prefab);
-                    obj.transform.position = new Vector3(data.x, data.y, data.z);
-                    var script = obj.AddComponent<GegenstandAnwenden>();
-                    script.gegenstand = gegenstand;
-                    script.anzahl = data.anzahl;
-                    script.bedingung = data.bedingung;
-                    script.zustand = data.zustand;
-                }
-            }
-            else
+            if (!ok)
             {
                 Debug.Log("Keine Weltdaten geladen. Szenenobjekte bleiben unverändert");
+                return;
             }
+            // Aufhebbare Objekte
+            // Alte Objekte löschen
+            GegenstandAufheben[] gegenstandAufhebenScene = GameObject.FindObjectsByType<GegenstandAufheben>(FindObjectsSortMode.None);
+            foreach (GegenstandAufheben gegenstand in gegenstandAufhebenScene)
+                GameObject.Destroy(gegenstand.gameObject);
+
+            // Neue Objekte erstellen
+            foreach (GegenstandData data in gegenstaendeAufheben)
+            {
+                Gegenstand gegenstand = Inventar.FindGegenstand(data.gegenstandsName);
+                var obj = GameObject.Instantiate(gegenstand.prefab);
+                obj.transform.position = new Vector3(data.x, data.y, data.z);
+                var script = obj.AddComponent<GegenstandAufheben>();
+                script.gegenstand = gegenstand;
+            }
+
+            // Interaktionsobjekte
+            // Finde gespeicherte Objekte in der Szene und aktualisiere den Zustand
+            GegenstandAnwenden[] gegenstandAnwendenScene = GameObject.FindObjectsByType<GegenstandAnwenden>(FindObjectsSortMode.None);
+            foreach (GegenstandData data in gegenstaendeAnwenden)
+            {
+                var script = FindGegenstandSzene(gegenstandAnwendenScene, data.objectId);
+                if (script == null) continue;
+                script.transform.position = new Vector3(data.x, data.y, data.z);
+                script.anzahl = data.anzahl;
+                script.bedingung = data.bedingung;
+                script.Zustand = data.zustand;
+            }
+        }
+
+        GegenstandAnwenden FindGegenstandSzene(GegenstandAnwenden[] gegenstandAnwendenScene, string id)
+        {
+            foreach (GegenstandAnwenden item in gegenstandAnwendenScene)
+                if (item.SaveId.Equals(id))
+                    return item;
+            Debug.LogWarning("GegenstandAnwenden nicht gefunden mit ID=" + id);
+            return null;
         }
 
         public void Delete()
