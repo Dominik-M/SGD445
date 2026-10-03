@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b34970b58a5866640b1385bc5f4e1277, type: 3}
+  m_Name: "Schl\xFCssel"
+  m_EditorClassIdentifier: Assembly-CSharp::Gegenstand
+  bedingung: "Schl\xFCssel"
+  anzahl: 0
+  maxAnzahl: 99
+  icon: {fileID: 21300000, guid: e026480505cbec34287c8063fa219fec, type: 3}
+  prefab: {fileID: 383235029821044714, guid: 2c461ba0b22fe4b4983f495c1a2f8501, type: 3}

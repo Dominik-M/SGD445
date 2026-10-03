@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b34970b58a5866640b1385bc5f4e1277, type: 3}
   m_Name: Kugel
   m_EditorClassIdentifier: Assembly-CSharp::Gegenstand
-  bedingung: Klotz
+  bedingung: Kugel
   anzahl: 1
   maxAnzahl: 99
   icon: {fileID: 21300000, guid: 8d4681250f693f74eb54acaa927bb7ff, type: 3}

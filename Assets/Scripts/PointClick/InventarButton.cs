@@ -8,45 +8,60 @@ namespace PointClick
         [Header("Refrenzen & Setup")]
         [SerializeField] private TMPro.TextMeshProUGUI text;
         [SerializeField] private Button button;
+        [SerializeField] private Image icon;
 
         private Gegenstand ggst;
-
         public Gegenstand Ggst
         {
             get => ggst;
             set
             {
                 ggst = value;
-                UpdateText();
+                UpdateIconAndText();
+            }
+        }
+        private int anzahl;
+        public int Anzahl
+        {
+            get => anzahl; set
+            {
+                anzahl = value;
+                UpdateIconAndText();
             }
         }
 
         void Start()
         {
-            UpdateText();
+            UpdateIconAndText();
             button.onClick.AddListener(OnClick);
         }
 
-        void UpdateText()
+        void UpdateIconAndText()
         {
             if (Ggst == null)
             {
                 text.text = "Leer";
+                icon.sprite = null;
             }
             else
             {
-                text.text = Ggst.ToString();
+                if (Anzahl > 1)
+                    text.text = Ggst.ToString() + " x " + Anzahl;
+                else
+                    text.text = Ggst.ToString();
+                icon.sprite = Ggst.icon;
             }
         }
 
         void OnClick()
         {
-            if (Inventar.GehaltenerGegenstand==null)
+            Gegenstand gehaltenerGegenstand = Inventar.GetGegenstandInHand();
+            if (gehaltenerGegenstand == null)
             {
                 if (Ggst != null)
                 {
                     // Gegenstand aufnehmen
-                    Inventar.GehaltenerGegenstand = Ggst;
+                    Inventar.SetGegenstandInHand(Ggst.name);
                     // Falls gehaltener Gegenstand wie ein eigener Inventar Slot ist, entferne ihn beim Aufnehmen
                     //Inventar.Remove(Ggst.name);
                 }
@@ -57,20 +72,20 @@ namespace PointClick
                 {
                     // Leerer Slot, lege Gegenstand ab
                     //if (Inventar.Add(Inventar.GehaltenerGegenstand))
-                    Inventar.GehaltenerGegenstand = null;
+                    Inventar.SetGegenstandInHand(null);
                 }
                 else
                 {
-                    if (Ggst.Equals(Inventar.GehaltenerGegenstand))
+                    if (Ggst.Equals(gehaltenerGegenstand))
                     {
                         // Gleicher Gegenstand, auf Stapel legen
                         //if (Inventar.Add(Ggst.name))
-                        Inventar.GehaltenerGegenstand = null;
+                        Inventar.SetGegenstandInHand(null);
                     }
                     else
                     {
                         // Kombinieren
-                        PopupManager.ShowInfo("Kombiniere " + Ggst + " mit " + Inventar.GehaltenerGegenstand);
+                        PopupManager.ShowInfo("Kombiniere " + Ggst + " mit " + gehaltenerGegenstand);
                         // TODO
                     }
                 }

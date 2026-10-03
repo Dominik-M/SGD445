@@ -20,8 +20,9 @@ namespace PointClick
 
         public void Save()
         {
+            Debug.Log("Welt wird gespeichert...");
             // Szenen Objekte beschaffen
-            var player = GameObject.FindWithTag("Player");
+            var player = Inventar.Instance.Player;
             GegenstandAufheben[] gegenstandAufhebenScene = GameObject.FindObjectsByType<GegenstandAufheben>(FindObjectsSortMode.None);
             GegenstandAnwenden[] gegenstandAnwendenScene = GameObject.FindObjectsByType<GegenstandAnwenden>(FindObjectsSortMode.None);
 
@@ -31,6 +32,11 @@ namespace PointClick
                 playerX = player.transform.position.x;
                 playerY = player.transform.position.y;
                 playerZ = player.transform.position.z;
+                Debug.Log($"Spielerposition = {playerX.ToString("F1")} {playerY.ToString("F1")} {playerZ.ToString("F1")}");
+            }
+            else
+            {
+                Debug.LogWarning("Spielerposition kann nicht gespeichert werden: Spieler nicht gefunden");
             }
             gegenstaendeAufheben = new GegenstandData[gegenstandAufhebenScene.Length];
             for (int i = 0; i < gegenstaendeAufheben.Length; i++)
@@ -56,7 +62,7 @@ namespace PointClick
                     zustand = gegenstandAnwendenScene[i].Zustand,
                     objectId = gegenstandAnwendenScene[i].SaveId
                 };
-                Debug.Log($"WorldData.gegenstaendeAnwenden[{i}]: ID={gegenstaendeAnwenden[i].objectId}");
+                // Debug.Log($"WorldData.gegenstaendeAnwenden[{i}]: ID={gegenstaendeAnwenden[i].objectId}");
             }
 
             // Daten in Datei schreiben
@@ -64,6 +70,10 @@ namespace PointClick
             BinaryFormatter binaryFormatter = new BinaryFormatter();
             binaryFormatter.Serialize(meinFileStream, this);
             meinFileStream.Close();
+
+            // Buchstabendaten speichern
+            GameObject.FindAnyObjectByType<BuchstabenRaetsel>()?.Speichern();
+
             Debug.Log("Weltdaten gespeichert unter " + savefile);
         }
 
@@ -108,7 +118,7 @@ namespace PointClick
             // Neue Objekte erstellen
             foreach (GegenstandData data in gegenstaendeAufheben)
             {
-                Gegenstand gegenstand = Inventar.FindGegenstand(data.gegenstandsName);
+                Gegenstand gegenstand = Inventar.FindeGegenstand(data.gegenstandsName);
                 var obj = GameObject.Instantiate(gegenstand.prefab);
                 obj.transform.position = new Vector3(data.x, data.y, data.z);
                 var script = obj.AddComponent<GegenstandAufheben>();
@@ -140,6 +150,7 @@ namespace PointClick
 
         public void Delete()
         {
+            GameObject.FindAnyObjectByType<BuchstabenRaetsel>()?.DeleteData();
             File.Delete(savefile);
             Debug.Log("Weltdaten gelöscht");
         }

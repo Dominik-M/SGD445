@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b34970b58a5866640b1385bc5f4e1277, type: 3}
+  m_Name: Kleines z
+  m_EditorClassIdentifier: Assembly-CSharp::PointClick.Gegenstand
+  bedingung: z
+  maxAnzahl: 99
+  icon: {fileID: 21300000, guid: 9ae64cf8a59646443bb73ca993bb8164, type: 3}
+  prefab: {fileID: 5538021632697621477, guid: 83363326fe79744488301be9012f91fa, type: 3}

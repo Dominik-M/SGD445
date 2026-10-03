@@ -6,16 +6,13 @@ namespace PointClick
     public class Gegenstand : ScriptableObject
     {
         public string bedingung;
-        public int anzahl;
         public int maxAnzahl;
         public Sprite icon;
         public GameObject prefab;
 
         public override string ToString()
         {
-            if (anzahl > 1)
-                return name + "\nx" + anzahl.ToString();
-            else return name;
+            return name;
         }
 
         public bool Equals(Gegenstand other)

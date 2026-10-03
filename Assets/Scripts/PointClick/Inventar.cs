@@ -13,6 +13,17 @@ namespace PointClick
 {
     public class Inventar : MonoBehaviour
     {
+        [Serializable]
+        class InventarGegenstand
+        {
+            public string gegenstandsname;
+            public int anzahl;
+            public InventarGegenstand(string gegenstandsname, int anzahl)
+            {
+                this.gegenstandsname = gegenstandsname;
+                this.anzahl = anzahl;
+            }
+        }
         public const int ANZAHL_SLOTS = 10;
         public const float AUTOSAVE_INTERVAL = 2;
 
@@ -20,8 +31,12 @@ namespace PointClick
         // Sicherstellen, dass es eine Welt Datei pro Szene gibt
         private string savefileWorld;
 
-        private static Inventar instance;
-        private void Awake() => instance = this;
+        public static Inventar Instance { get; private set; }
+        private void Awake()
+        {
+            Instance = this;
+            LoadResources();
+        }
 
         [Header("Inventar Slot Button Prefab")]
         [SerializeField] private GameObject inventarButton;
@@ -42,10 +57,12 @@ namespace PointClick
         public StarterAssetsInputs inputs;
 
         private static readonly List<Gegenstand> alleGegenstaende = new();
-        private readonly Gegenstand[] gegenstaende = new Gegenstand[ANZAHL_SLOTS];
+        private readonly InventarGegenstand[] gegenstaende = new InventarGegenstand[ANZAHL_SLOTS];
         private readonly InventarButton[] slots = new InventarButton[ANZAHL_SLOTS];
         private string savefile;
         private WorldData worldData;
+        private GameObject player;
+        public GameObject Player => player;
 
         private static bool zeigeInventar;
         public static bool ZeigeInventar
@@ -55,43 +72,52 @@ namespace PointClick
             {
                 zeigeInventar = value;
                 Time.timeScale = zeigeInventar ? 0 : 1;
-                if (instance != null)
+                if (Instance != null)
                 {
-                    if (instance.inventarPanel != null)
-                        instance.inventarPanel.SetActive(zeigeInventar);
-                    if (instance.inputs != null)
+                    if (Instance.inventarPanel != null)
+                        Instance.inventarPanel.SetActive(zeigeInventar);
+                    if (Instance.inputs != null)
                     {
-                        instance.inputs.cursorInputForLook = !zeigeInventar;
+                        Instance.inputs.cursorInputForLook = !zeigeInventar;
                     }
                     Cursor.lockState = zeigeInventar ? CursorLockMode.None : CursorLockMode.Locked;
                 }
             }
         }
 
-        private static Gegenstand gehaltenerGegenstand;
-        public static Gegenstand GehaltenerGegenstand
+        private static int gehaltenerGegenstandIndex;
+        static int GehaltenerGegenstandIndex
         {
-            get => gehaltenerGegenstand;
+            get => gehaltenerGegenstandIndex;
             set
             {
-                gehaltenerGegenstand = value;
-                if (instance != null)
+                gehaltenerGegenstandIndex = value;
+                if (Instance != null)
+                    Instance?.UpdateHand();
+            }
+        }
+        public static Gegenstand GetGegenstandInHand()
+        {
+            if (Instance == null) return null;
+            if (GehaltenerGegenstandIndex < 0 || GehaltenerGegenstandIndex >= ANZAHL_SLOTS) return null;
+            InventarGegenstand ggst = Instance.gegenstaende[gehaltenerGegenstandIndex];
+            if (ggst == null) return null;
+            return FindeGegenstand(ggst.gegenstandsname);
+        }
+        public static void SetGegenstandInHand(string gegenstandsName)
+        {
+            if (Instance == null) return;
+            if (string.IsNullOrEmpty(gegenstandsName))
+                GehaltenerGegenstandIndex = -1;
+            for (int i = 0; i < Instance.gegenstaende.Length; i++)
+            {
+                if (Instance.gegenstaende[i] != null && Instance.gegenstaende[i].gegenstandsname.Equals(gegenstandsName))
                 {
-                    if (instance.gehaltenerGegenstandText != null)
-                    {
-                        if (gehaltenerGegenstand != null)
-                            instance.gehaltenerGegenstandText.text = "In der Hand: " + gehaltenerGegenstand;
-                        else
-                            instance.gehaltenerGegenstandText.text = "Kein Gegenstand in der Hand";
-                    }
-                    if (instance.rechteHand != null)
-                    {
-                        foreach (Transform child in instance.rechteHand) Destroy(child.gameObject);
-                        if (gehaltenerGegenstand != null)
-                            Instantiate(gehaltenerGegenstand.prefab, instance.rechteHand).transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
-                    }
+                    GehaltenerGegenstandIndex = i;
+                    return;
                 }
             }
+            GehaltenerGegenstandIndex = -1;
         }
 
         private Coroutine autoSaveRoutine;
@@ -101,7 +127,6 @@ namespace PointClick
             savefileItems = "gegenstaende.bin";
             // Sicherstellen, dass es eine Welt Datei pro Szene gibt
             savefileWorld = "welt" + SceneManager.GetActiveScene().buildIndex + ".bin";
-            LoadResources();
             BuildInventorySlots();
             Init();
             // Inventar am Anfang nicht zeigen
@@ -127,27 +152,36 @@ namespace PointClick
 
         void Init()
         {
+            // Spieler finden
+            player = GameObject.FindGameObjectWithTag("Player");
+            if (player == null)
+                Debug.LogWarning("Inventar.Init(): Player not found!");
+
             savefile = Path.Combine(Application.persistentDataPath, savefileItems);
             // Die Liste laden bzw. neu erzeugen
             ListeLaden();
             // Inventar aktualisieren
             UpdateSlots();
-            GehaltenerGegenstand = null;
+            GehaltenerGegenstandIndex = -1;
 
             // Welt Zustand laden
             worldData = new WorldData(Path.Combine(Application.persistentDataPath, savefileWorld));
             worldData.Load();
 
             // Spielerposition setzen
-            var player = GameObject.FindGameObjectWithTag("Player");
             if (player != null)
+            {
                 player.transform.position = new Vector3(worldData.playerX, worldData.playerY, worldData.playerZ);
+                Debug.Log("Initiale Spielerposition: " + player.transform.position);
+            }
         }
 
         private void OnEnable()
         {
             inventarAction.action?.Enable();
             Cursor.lockState = CursorLockMode.Locked;
+            if (autoSaveRoutine != null)
+                StopCoroutine(autoSaveRoutine);
             autoSaveRoutine = StartCoroutine(AutoSaveLoop());
         }
 
@@ -170,8 +204,7 @@ namespace PointClick
             while (true)
             {
                 yield return new WaitForSeconds(AUTOSAVE_INTERVAL);
-                worldData.Save();
-                ListeSpeichern();
+                SaveAllData();
             }
         }
 
@@ -179,7 +212,41 @@ namespace PointClick
         {
             for (int i = 0; i < gegenstaende.Length; i++)
             {
-                slots[i].Ggst = gegenstaende[i];
+                if (gegenstaende[i] != null)
+                    slots[i].Ggst = FindeGegenstand(gegenstaende[i].gegenstandsname);
+                else slots[i].Ggst = null;
+            }
+            UpdateHand();
+        }
+
+        void UpdateHand()
+        {
+            Gegenstand gehaltenerGegenstand = GetGegenstandInHand();
+            int anzahl = 0;
+            if (gehaltenerGegenstand != null)
+                anzahl = gegenstaende[gehaltenerGegenstandIndex].anzahl;
+
+            if (gehaltenerGegenstandText != null)
+            {
+                if (gehaltenerGegenstand != null)
+                    if (anzahl > 1)
+                        gehaltenerGegenstandText.text = "In der Hand: " + gehaltenerGegenstand + " x " + anzahl;
+                    else
+                        gehaltenerGegenstandText.text = "In der Hand: " + gehaltenerGegenstand;
+                else
+                    gehaltenerGegenstandText.text = "Kein Gegenstand in der Hand";
+            }
+            if (rechteHand != null)
+            {
+                foreach (Transform child in rechteHand) Destroy(child.gameObject);
+                if (gehaltenerGegenstand != null)
+                {
+                    var obj = Instantiate(gehaltenerGegenstand.prefab, rechteHand);
+                    obj.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+                    // Bei Buchstaben Objekten Text vordefinieren
+                    var textSetter = obj.GetComponent<BuchstabenTextSetter>();
+                    if (textSetter != null) textSetter.Text = gehaltenerGegenstand.bedingung;
+                }
             }
         }
 
@@ -194,16 +261,14 @@ namespace PointClick
                 // Eine instanz von BinaryFormatter erzeugen
                 BinaryFormatter binaryFormatter = new BinaryFormatter();
                 // Die Daten deserialisieren und ablegen
-                GegenstandData[] geladeneGegenstaende;
+                InventarGegenstand[] geladeneGegenstaende;
                 try
                 {
-                    geladeneGegenstaende = binaryFormatter.Deserialize(meinFileStream) as GegenstandData[];
+                    geladeneGegenstaende = binaryFormatter.Deserialize(meinFileStream) as InventarGegenstand[];
                     for (int i = 0; i < ANZAHL_SLOTS; i++)
-                        if (i < geladeneGegenstaende.Length && geladeneGegenstaende[i] != null)
+                        if (i < geladeneGegenstaende.Length)
                         {
-                            gegenstaende[i] = FindGegenstand(geladeneGegenstaende[i].gegenstandsName);
-                            if (gegenstaende[i] != null)
-                                gegenstaende[i].anzahl = geladeneGegenstaende[i].anzahl;
+                            gegenstaende[i] = geladeneGegenstaende[i];
                         }
                         else
                             gegenstaende[i] = null;
@@ -226,31 +291,25 @@ namespace PointClick
 
         void ListeSpeichern()
         {
-            // Die Speicherdaten aus den Inventargegenständen extrahieren
-            GegenstandData[] gegenstaendDaten = new GegenstandData[gegenstaende.Length];
-            for (int i = 0; i < gegenstaende.Length; i++)
-            {
-                if (gegenstaende[i] != null)
-                {
-                    gegenstaendDaten[i] = new GegenstandData
-                    {
-                        gegenstandsName = gegenstaende[i].name,
-                        anzahl = gegenstaende[i].anzahl
-                    };
-                }
-                else
-                {
-                    gegenstaendDaten[i] = null;
-                }
-            }
             // Eine neue Instanz von FileStream erzeugen
             FileStream meinFileStream = new FileStream(savefile, FileMode.Create);
             // Eine Instanz von BinaryFormatter erzeugen
             BinaryFormatter binaryFormatter = new BinaryFormatter();
             // Die Daten speichern. Dazu wird einfach die Liste serialisiert
-            binaryFormatter.Serialize(meinFileStream, gegenstaendDaten);
+            binaryFormatter.Serialize(meinFileStream, gegenstaende);
             meinFileStream.Close();
             Debug.Log("Gegenstände gespeichert unter " + savefile);
+        }
+
+        void WeltSpeichern()
+        {
+            worldData.Save();
+        }
+
+        public void SaveAllData()
+        {
+            WeltSpeichern();
+            ListeSpeichern();
         }
 
         public void DeleteData()
@@ -266,9 +325,23 @@ namespace PointClick
             catch (Exception) { Debug.LogError("Kann Speicherstand nicht löschen. Datei nicht vorhanden?"); }
         }
 
-        public static bool Add(Gegenstand gegenstand)
+        public static Gegenstand Get(int index)
         {
-            if (instance == null)
+            if (Instance == null)
+            {
+                PopupManager.ShowError("Inventar nicht initialisiert!");
+                return null;
+            }
+            if (index < 0 || index >= ANZAHL_SLOTS)
+            {
+                return null;
+            }
+            return FindeGegenstand(Instance.gegenstaende[index].gegenstandsname);
+        }
+
+        public static bool Add(Gegenstand gegenstand, int anzahl = 1)
+        {
+            if (Instance == null)
             {
                 PopupManager.ShowError("Inventar nicht initialisiert!");
                 return false;
@@ -280,15 +353,15 @@ namespace PointClick
             }
 
             // Zuerst prüfen Gleicher Gegenstand schon vorhanden und Anzahl erhöhen
-            for (int i = 0; i < instance.gegenstaende.Length; i++)
+            for (int i = 0; i < Instance.gegenstaende.Length; i++)
             {
-                if (instance.gegenstaende[i] != null
-                    && gegenstand.name.Equals(instance.gegenstaende[i].name))
+                if (Instance.gegenstaende[i] != null
+                    && gegenstand.name.Equals(Instance.gegenstaende[i].gegenstandsname))
                 {
-                    if (instance.gegenstaende[i].anzahl + gegenstand.anzahl <= gegenstand.maxAnzahl)
+                    if (Instance.gegenstaende[i].anzahl + anzahl <= gegenstand.maxAnzahl)
                     {
-                        instance.gegenstaende[i].anzahl += gegenstand.anzahl;
-                        instance.UpdateSlots();
+                        Instance.gegenstaende[i].anzahl += anzahl;
+                        Instance.UpdateSlots();
                         return true;
                     }
                     else
@@ -299,13 +372,12 @@ namespace PointClick
                 }
             }
             // Neuer Gegenstand, suche freien Slot
-            for (int i = 0; i < instance.gegenstaende.Length; i++)
+            for (int i = 0; i < Instance.gegenstaende.Length; i++)
             {
-                if (instance.gegenstaende[i] == null)
+                if (Instance.gegenstaende[i] == null)
                 {
-                    instance.gegenstaende[i] = gegenstand;
-                    gegenstand.anzahl = 1;
-                    instance.UpdateSlots();
+                    Instance.gegenstaende[i] = new InventarGegenstand(gegenstand.name, anzahl);
+                    Instance.UpdateSlots();
                     return true;
                 }
             }
@@ -315,7 +387,7 @@ namespace PointClick
 
         public static bool Remove(string gegenstandsName, int anzahl)
         {
-            if (instance == null)
+            if (Instance == null)
             {
                 PopupManager.ShowError("Inventar nicht initialisiert!");
                 return false;
@@ -326,24 +398,22 @@ namespace PointClick
                 return false;
             }
 
-            for (int i = 0; i < instance.gegenstaende.Length; i++)
+            for (int i = 0; i < Instance.gegenstaende.Length; i++)
             {
-                if (instance.gegenstaende[i] != null
-                    && gegenstandsName.Equals(instance.gegenstaende[i].name))
+                if (Instance.gegenstaende[i] != null
+                    && gegenstandsName.Equals(Instance.gegenstaende[i].gegenstandsname))
                 {
-                    if (instance.gegenstaende[i].anzahl < anzahl)
+                    if (Instance.gegenstaende[i].anzahl < anzahl)
                     {
                         PopupManager.ShowWarning($"Nicht genug {gegenstandsName} im Inventar. Braucht {anzahl}");
-
+                        return false;
                     }
-                    instance.gegenstaende[i].anzahl -= anzahl;
-                    if (instance.gegenstaende[i].anzahl <= 0)
+                    Instance.gegenstaende[i].anzahl -= anzahl;
+                    if (Instance.gegenstaende[i].anzahl <= 0)
                     {
-                        if (instance.gegenstaende[i].Equals(gehaltenerGegenstand))
-                            GehaltenerGegenstand = null;
-                        instance.gegenstaende[i] = null;
+                        Instance.gegenstaende[i] = null;
                     }
-                    instance.UpdateSlots();
+                    Instance.UpdateSlots();
                     return true;
                 }
             }
@@ -351,34 +421,9 @@ namespace PointClick
             return false;
         }
 
-        public static Gegenstand Get(string gegenstandsName)
-        {
-            if (instance == null)
-            {
-                PopupManager.ShowError("Inventar nicht initialisiert!");
-                return null;
-            }
-            if (string.IsNullOrEmpty(gegenstandsName))
-            {
-                PopupManager.ShowError("Ungültiger Gegenstand!");
-                return null;
-            }
-
-            for (int i = 0; i < instance.gegenstaende.Length; i++)
-            {
-                if (instance.gegenstaende[i] != null
-                    && gegenstandsName.Equals(instance.gegenstaende[i].name))
-                {
-                    return instance.gegenstaende[i];
-                }
-            }
-            Debug.LogWarning($"Inventar.Get({gegenstandsName}): Nicht gefunden");
-            return null;
-        }
-
         public static bool PruefeGegenstand(string bedingung, int anzahl)
         {
-            Gegenstand gehalten = GehaltenerGegenstand;
+            Gegenstand gehalten = GetGegenstandInHand();
             if (gehalten == null)
                 return false;
 
@@ -391,8 +436,9 @@ namespace PointClick
             return false;
         }
 
-        public static Gegenstand FindGegenstand(string name)
+        public static Gegenstand FindeGegenstand(string name)
         {
+            if (string.IsNullOrEmpty(name)) return null;
             foreach (Gegenstand g in alleGegenstaende)
                 if (g.name == name) return g;
             Debug.LogWarning("Cannot find item: " + name);

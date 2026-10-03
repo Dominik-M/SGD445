@@ -122,8 +122,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7005156779812330666}
-  - component: {fileID: 7215227372473321452}
   - component: {fileID: 7393125200406953734}
+  - component: {fileID: 568364160175270233}
+  - component: {fileID: -5801934989009621780}
   m_Layer: 0
   m_Name: Kiste
   m_TagString: Untagged
@@ -148,21 +149,6 @@ Transform:
   - {fileID: 108141439334584860}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: -90, z: 0}
---- !u!114 &7215227372473321452
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3451866288368679643}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1edf9c962464dcc4cb863a7839c7549e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DoorInteraction
-  Text: Kiste
-  Icon: {fileID: 0}
-  Door: {fileID: 7393125200406953734}
 --- !u!114 &7393125200406953734
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -181,6 +167,33 @@ MonoBehaviour:
   doorOpenPosition: {x: 0, y: 0.45, z: -0.4}
   doorClosedPosition: {x: 0, y: 0.45, z: -0.4}
   slerpSpeed: 4
+--- !u!114 &568364160175270233
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3451866288368679643}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e30730338532129458b7af7e9072007c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GegenstandAnwendenDoorConnector
+--- !u!114 &-5801934989009621780
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3451866288368679643}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2952f531973d80d4787afd36403fe5c6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PointClick.GegenstandAnwenden
+  bedingung: 
+  anzahl: 0
+  Endzustand: 1
 --- !u!1 &8029546482519149085
 GameObject:
   m_ObjectHideFlags: 0

@@ -34,17 +34,25 @@ namespace PointClick
         {
             if (zustand >= Endzustand)
                 return;
-            Gegenstand gehalten = Inventar.GehaltenerGegenstand;
+
+            if (string.IsNullOrEmpty(bedingung))
+            {
+                // Keine Bedingung, direkt Zustand ändern
+                Zustand++;
+                return;
+            }
+
+            Gegenstand gehalten = Inventar.GetGegenstandInHand();
             if (gehalten == null)
             {
                 PopupManager.ShowWarning("Kein Gegenstand in der Hand");
                 return;
             }
             // Passt dar Gegenstand hier?
-            if (Inventar.PruefeGegenstand(bedingung, 1))
+            if (Inventar.PruefeGegenstand(bedingung, anzahl))
             {
                 // Verbrauche den Gegenstand
-                if (Inventar.Remove(gehalten.name, 1))
+                if (Inventar.Remove(gehalten.name, anzahl))
                 {
                     Zustand++;
                     PopupManager.ShowInfo("Der Gegenstand " + gehalten + " wurde angewendet.");
