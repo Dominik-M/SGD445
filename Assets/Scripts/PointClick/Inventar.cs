@@ -173,6 +173,8 @@ namespace PointClick
             {
                 player.transform.position = new Vector3(worldData.playerX, worldData.playerY, worldData.playerZ);
                 Debug.Log("Initiale Spielerposition: " + player.transform.position);
+                // For testing only
+                //player.transform.position = new Vector3(14f, 0.6f, 168f);
             }
         }
 
@@ -244,7 +246,7 @@ namespace PointClick
                     var obj = Instantiate(gehaltenerGegenstand.prefab, rechteHand);
                     obj.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
                     // Bei Buchstaben Objekten Text vordefinieren
-                    var textSetter = obj.GetComponent<BuchstabenTextSetter>();
+                    var textSetter = obj.GetComponent<BuchstabenTextController>();
                     if (textSetter != null) textSetter.Text = gehaltenerGegenstand.bedingung;
                 }
             }

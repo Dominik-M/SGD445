@@ -1,3 +1,4 @@
+using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -16,5 +17,14 @@ public class LevelMenuController : MainMenuController
         {
             levelSelectButtons[i].interactable = i < level;
         }
+    }
+
+    public void DeleteAll()
+    {
+        PlayerPrefs.DeleteAll();
+        string savefolder = Application.persistentDataPath;
+        foreach (var file in Directory.GetFiles(savefolder))
+            File.Delete(file);
+        Debug.Log("Alle Speicherdaten gelöscht");
     }
 }

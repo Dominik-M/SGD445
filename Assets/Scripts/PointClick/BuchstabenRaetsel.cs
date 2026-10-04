@@ -14,6 +14,7 @@ namespace PointClick
             public string wort;
             public GegenstandData[] platzierteBuchstaben;
         }
+
         [Header("Prefab eines aufnehmbaren Buchstabens")]
         [SerializeField] private GameObject buchstabenPrefab;
 
@@ -35,6 +36,9 @@ namespace PointClick
         [Header("Transform des Objektes, das den Weg versperrt")]
         [SerializeField] private Transform door;
 
+        [Header("GUI Text der Anweisung")]
+        [SerializeField] private TMPro.TextMeshProUGUI anweisung;
+
         private string savefile;
         private SaveData data;
         private string[] woerter;
@@ -45,9 +49,9 @@ namespace PointClick
         void Start()
         {
             savefile = Path.Combine(Application.persistentDataPath, "buchstaben.bin");
-            if (buchstabenPrefab == null)
+            if (buchstabenPrefab == null || buchstabenPlatzPrefab == null)
             {
-                Debug.LogWarning("BuchstabenErzeugen Fehler: Sie müssen ein Prefab angeben");
+                Debug.LogWarning("BuchstabenErzeugen Fehler: Sie müssen Prefabs angeben");
                 return;
             }
 
@@ -194,9 +198,15 @@ namespace PointClick
             do
             {
                 yield return new WaitForSeconds(1);
+                int anz = ZaehleBuchstaben();
+                if (anz > 0)
+                    anweisung.text = "Suchen sie die Buchstaben und erraten sie das Lösungswort um das Tor zu öffnen.\r\nNoch zu finden: " + anz;
+                else
+                    anweisung.text = "Platzieren sie die Buchstaben in der richtigen Reihenfolge auf den Sockeln vor dem Tor";
             } while (!RaetselGeloest());
 
             // Raetsel gelöst, Tor öffnen
+            anweisung.text = "Rätsel gelöst!";
             foreach (var buchstabenPlatz in buchstabenPlatzScene)
                 buchstabenPlatz.RaetselGeloest();
             float t = 0;
@@ -213,6 +223,16 @@ namespace PointClick
 
             // Routine als beendet erklären
             checkRoutine = null;
+        }
+
+        int ZaehleBuchstaben()
+        {
+            // Sammelbare Buchstaben sind Objekte die sowohl GegenstandAufheben als auch BuchstabenTextController Scripte haben
+            var gegenstandAufheben = GameObject.FindObjectsByType<GegenstandAufheben>(FindObjectsSortMode.None);
+            int anz = 0;
+            foreach (var gegenstand in gegenstandAufheben)
+                if (gegenstand.GetComponent<BuchstabenTextController>() != null) anz++;
+            return anz;
         }
 
         bool RaetselGeloest()

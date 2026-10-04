@@ -18,7 +18,7 @@ public class BuchstabenPlatz : MonoBehaviour, IInteractable
                 gegenstandObjekt = Instantiate(value.prefab, transform);
                 gegenstandObjekt.transform.localPosition = new Vector3(0, 1, 0);
                 gegenstandObjekt.transform.localRotation = Quaternion.identity;
-                var textSetter = gegenstandObjekt.GetComponent<BuchstabenTextSetter>();
+                var textSetter = gegenstandObjekt.GetComponent<BuchstabenTextController>();
                 if (textSetter != null) textSetter.Text = value.bedingung;
             }
         }
@@ -94,7 +94,7 @@ public class BuchstabenPlatz : MonoBehaviour, IInteractable
     public void RaetselGeloest()
     {
         geloest = true;
-        var textSetter = gegenstandObjekt.GetComponent<BuchstabenTextSetter>();
+        var textSetter = gegenstandObjekt.GetComponent<BuchstabenTextController>();
         if (textSetter != null) textSetter.SetColor(Color.green);
     }
 }
