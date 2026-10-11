@@ -5,22 +5,25 @@ namespace PointClick
 {
     public class NumPadButtonController : MonoBehaviour, IInteractable
     {
-        [Header("Meine Zahl (0-9) -1 = ENTER")]
-        [SerializeField] private int number;
+        [Header("Meine Ziffer (0-9) -1 = ENTER")]
+        [SerializeField] private int digit;
         [Header("Referenz auf das Raetsel")]
         [SerializeField] private ZahlenRaetsel raetsel;
         [Header("Referenz auf den Zahlentext")]
         [SerializeField] private TMPro.TextMeshPro numText;
+
+        // Definiere Buttons mit Ziffer kleiner 0 als der "OK" Button
+        bool IsConfirmButton => digit < 0;
 
         private Coroutine animationRoutine;
         private Vector3 normalPos;
 
         public void OnCursorEnter()
         {
-            if (number < 0)
+            if (IsConfirmButton)
                 Tooltip.Show($"Bestätigen");
             else
-                Tooltip.Show("Wähle die " + number);
+                Tooltip.Show("Wähle die " + digit);
         }
 
         public void OnCursorExit()
@@ -30,10 +33,10 @@ namespace PointClick
 
         public void OnInteract()
         {
-            if (number < 0)
+            if (IsConfirmButton)
                 raetsel.Check();
             else
-                raetsel.EnterNumber(number);
+                raetsel.EnterNumber(digit);
             if (animationRoutine != null) StopCoroutine(animationRoutine);
             animationRoutine = StartCoroutine(ButtonPressAnimation());
         }
@@ -41,12 +44,12 @@ namespace PointClick
         void Start()
         {
             normalPos = transform.localPosition;
-            if (number < 0)
+            if (IsConfirmButton)
                 numText.text = "OK";
-            else if (number < 10)
-                numText.text = number.ToString();
+            else if (digit < 10)
+                numText.text = digit.ToString();
             else
-                Debug.LogError("Invalid number on Num Pad Button: " + number);
+                Debug.LogError("Invalid number on Num Pad Button: " + digit);
         }
 
         IEnumerator ButtonPressAnimation()

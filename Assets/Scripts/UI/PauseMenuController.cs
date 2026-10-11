@@ -50,4 +50,9 @@ public class PauseMenuController : MonoBehaviour
         Paused = false;// To reset time scale
         SceneManager.LoadScene(0);
     }
+    public void RestartScene()
+    {
+        Paused = false;// To reset time scale
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
 }

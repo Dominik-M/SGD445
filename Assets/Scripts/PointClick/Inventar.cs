@@ -174,7 +174,7 @@ namespace PointClick
                 player.transform.position = new Vector3(worldData.playerX, worldData.playerY, worldData.playerZ);
                 Debug.Log("Initiale Spielerposition: " + player.transform.position);
                 // For testing only
-                //player.transform.position = new Vector3(14f, 0.6f, 168f);
+                player.transform.position = new Vector3(14f, 0.6f, 168f);
             }
         }
 
