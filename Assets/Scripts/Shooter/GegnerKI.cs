@@ -43,8 +43,6 @@ namespace Shooter
             }
             state = State.IDLE;
             startPos = transform.position;
-            // Waffe Munition geben
-            wpn?.AddMunition(100);
         }
 
 
@@ -117,6 +115,11 @@ namespace Shooter
         {
             if (wpn == null) return;
             float reichweite = wpn.Range;
+            if (wpn.Ammo <= 0)
+            {
+                // Nachladen
+                wpn.AddMunition(100);
+            }
             if (state == State.AGGRO && abstandZumSpieler <= reichweite)
             {
                 // Wir können ballern, ziele auf Spieler
@@ -136,7 +139,7 @@ namespace Shooter
             if (state == State.DEAD) return;
             // Ich wurde getroffen, das war vermutlich der Spieler, jetzt bin ich sauer
             state = State.AGGRO;
-            // Treffer Feedback, starte die Animation neu
+            // Starte die Animation neu
             if (animator != null) animator.SetTrigger("Hit");
         }
 
@@ -158,7 +161,12 @@ namespace Shooter
                 wpn.Firing = false;
                 wpn.Target = null;
             }
-            // Treffer Feedback, starte die Animation neu
+
+            // Collider ausschalten
+            foreach (Collider c in GetComponentsInChildren<Collider>())
+                c.enabled = false;
+
+            // Starte die Animation neu
             if (animator != null) animator.SetTrigger("Die");
             // Nach der Animation entfernen
             Destroy(gameObject, 1f);

@@ -5,8 +5,20 @@ using UnityEngine;
 
 public class GegnerSpawner : MonoBehaviour
 {
-    [Header("Prefab für das Gegner Objekt")]
-    [SerializeField] private DamageController gegnerPrefab;
+    [System.Serializable]
+    public class GegnerTyp
+    {
+        public string name;
+        public DamageController prefab;
+        [Min(1)] public int kosten = 1;
+        [Min(1)] public int ersteWelle = 1;   // ab dieser Welle verfügbar
+        [Min(0)] public float gewicht = 1f;   // Häufigkeit bei der Auswahl
+    }
+    [Header("Gegnertypen")]
+    [SerializeField] private List<GegnerTyp> gegnerTypen = new List<GegnerTyp>();
+    [SerializeField] private int basisBudget = 3;
+    [SerializeField] private float budgetProWelle = 2f;
+    [SerializeField] private int maxGleichzeitig = 30;
     [Header("Gegner Spawn Positionen")]
     [SerializeField] private Transform[] spawnPunkte;
     [Header("Mindest Abstand zum Spieler")]
@@ -33,6 +45,9 @@ public class GegnerSpawner : MonoBehaviour
         if (spawnRoutine != null) StopCoroutine(spawnRoutine);
     }
 
+    int WellenBudget(int welle) => basisBudget + Mathf.RoundToInt(welle * budgetProWelle);
+    bool SpielerLebt() => Spieler.Instance != null && !Spieler.Instance.Leben.IsDead();
+
     IEnumerator SpawnGegner()
     {
         yield return new WaitForSeconds(1);
@@ -40,12 +55,21 @@ public class GegnerSpawner : MonoBehaviour
         {
             waveNumber++;
             waveTimeRemain = timeBetweenWaves;
-            int anz = waveNumber + 1;
             Debug.Log("Starte Welle " + waveNumber);
-            for (int i = 0; i < anz && SpielerLebt(); i++)
+            int budget = WellenBudget(waveNumber);
+
+            while (budget > 0 && SpielerLebt())
             {
+                // Limit gleichzeitiger Gegner einhalten
+                while (GegnerAnzahl >= maxGleichzeitig && SpielerLebt())
+                    yield return null;
+
+                GegnerTyp typ = WaehleTyp(budget, waveNumber);
+                if (typ == null) break;           // nichts Passendes mehr im Budget
+
+                budget -= typ.kosten;
                 Transform spawnPunkt = WaehleSpawnPunkt();
-                DamageController gegner = Instantiate(gegnerPrefab, spawnPunkt.position, spawnPunkt.rotation);
+                DamageController gegner = Instantiate(typ.prefab, spawnPunkt.position, spawnPunkt.rotation);
                 gegnerSpawned.Add(gegner);
                 gegner.OnDeath += () => gegnerSpawned.Remove(gegner);
                 yield return new WaitForSeconds(timeBetweenSpawns);
@@ -58,8 +82,6 @@ public class GegnerSpawner : MonoBehaviour
             }
         }
     }
-
-    bool SpielerLebt() => Spieler.Instance != null && !Spieler.Instance.Leben.IsDead();
 
     Transform WaehleSpawnPunkt()
     {
@@ -76,5 +98,26 @@ public class GegnerSpawner : MonoBehaviour
         }
         // Alle zu nah (Spieler steht mittendrin): irgendeinen nehmen
         return spawnPunkte[start];
+    }
+
+    GegnerTyp WaehleTyp(int budget, int welle)
+    {
+        List<GegnerTyp> verfuegbar = new List<GegnerTyp>();
+        float summe = 0f;
+        foreach (var t in gegnerTypen)
+        {
+            if (t.prefab == null || t.ersteWelle > welle || t.kosten > budget) continue;
+            verfuegbar.Add(t);
+            summe += t.gewicht;
+        }
+        if (verfuegbar.Count == 0) return null;
+
+        float wurf = Random.value * summe;
+        foreach (var t in verfuegbar)
+        {
+            wurf -= t.gewicht;
+            if (wurf <= 0f) return t;
+        }
+        return verfuegbar[verfuegbar.Count - 1];
     }
 }

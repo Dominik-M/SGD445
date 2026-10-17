@@ -11,8 +11,7 @@ GameObject:
   - component: {fileID: 101781583705232283}
   - component: {fileID: 8041704810335910361}
   - component: {fileID: 6770456033342725194}
-  - component: {fileID: 3714624717260609830}
-  - component: {fileID: 5665944930425449105}
+  - component: {fileID: 8045553352798341377}
   m_Layer: 2
   m_Name: Capsule
   m_TagString: Untagged
@@ -30,7 +29,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.15, y: 0.3, z: 0.15}
+  m_LocalScale: {x: 0.25, y: 0.4, z: 0.25}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2523352700941273233}
@@ -68,7 +67,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 6afec0ecfe8b50044a514afe7ff39021, type: 2}
+  - {fileID: 2100000, guid: 979aef027a1c86c42a15ce35fce366fa, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -92,30 +91,7 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!136 &3714624717260609830
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 381115999747775171}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.5
-  m_Height: 2
-  m_Direction: 1
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!95 &5665944930425449105
+--- !u!95 &8045553352798341377
 Animator:
   serializedVersion: 7
   m_ObjectHideFlags: 0
@@ -162,7 +138,7 @@ Transform:
   m_GameObject: {fileID: 3195310369048065364}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0.3}
+  m_LocalPosition: {x: 0, y: 0, z: 0.4}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -338,7 +314,7 @@ ParticleSystem:
     startSpeed:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 2
+      scalar: 3
       minScalar: 5
       maxCurve:
         serializedVersion: 2
@@ -392,7 +368,7 @@ ParticleSystem:
       serializedVersion: 2
       minMaxState: 0
       minColor: {r: 1, g: 1, b: 1, a: 1}
-      maxColor: {r: 1, g: 0.8538387, b: 0, a: 1}
+      maxColor: {r: 0, g: 1, b: 0.43680596, a: 1}
       maxGradient:
         serializedVersion: 2
         key0: {r: 1, g: 1, b: 1, a: 1}
@@ -834,7 +810,7 @@ ParticleSystem:
     serializedVersion: 6
     enabled: 1
     type: 4
-    angle: 30
+    angle: 40
     length: 5
     boxThickness: {x: 0, y: 0, z: 0}
     radiusThickness: 1
@@ -1149,7 +1125,7 @@ ParticleSystem:
       countCurve:
         serializedVersion: 2
         minMaxState: 0
-        scalar: 20
+        scalar: 40
         minScalar: 30
         maxCurve:
           serializedVersion: 2
@@ -1535,7 +1511,7 @@ ParticleSystem:
       maxColor: {r: 1, g: 1, b: 1, a: 1}
       maxGradient:
         serializedVersion: 2
-        key0: {r: 1, g: 0.62967366, b: 0, a: 1}
+        key0: {r: 0, g: 1, b: 0.6797888, a: 1}
         key1: {r: 0, g: 0, b: 0, a: 0}
         key2: {r: 0, g: 0, b: 0, a: 0}
         key3: {r: 0, g: 0, b: 0, a: 0}
@@ -5072,10 +5048,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2523352700941273233}
-  - component: {fileID: 494229161719773894}
-  - component: {fileID: 6549944063158909788}
+  - component: {fileID: 1623400491978932573}
+  - component: {fileID: 3052764609405440901}
   m_Layer: 2
-  m_Name: Knarre
+  m_Name: Laser
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5098,7 +5074,7 @@ Transform:
   - {fileID: 3609663601844788199}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &494229161719773894
+--- !u!114 &1623400491978932573
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -5107,21 +5083,23 @@ MonoBehaviour:
   m_GameObject: {fileID: 6098861623607658666}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fdf9e590541576f478ede59eb8ba19bb, type: 3}
+  m_Script: {fileID: 11500000, guid: 67173fbcaa6276845834422bee5d60e1, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: '::'
+  m_EditorClassIdentifier: Assembly-CSharp::Shooter.RayGunController
   schussEffekt: {fileID: 3329126362089431298}
-  animator: {fileID: 5665944930425449105}
+  animator: {fileID: 0}
   gunpoints:
   - {fileID: 3609663601844788199}
-  munition: {fileID: 11400000, guid: f9b3132da7a210048bc179e34ae4809b, type: 2}
-  damageScale: 1
-  range: 50
-  shootDelay: 0.5
+  munition: {fileID: 11400000, guid: 56418007b662a0e4da927b03fa1aa67c, type: 2}
+  damageScale: 5
+  range: 100
+  shootDelay: 1.5
   warmupTime: 0
-  spreadAngle: 3
-  shotPrefab: {fileID: 7689841180050400546, guid: 458b44d68dcbe25498b61af79d60ff77, type: 3}
---- !u!82 &6549944063158909788
+  spreadAngle: 0
+  strahlMaterial: {fileID: 2100000, guid: d5191cad32f070146a91ff6922de8dd9, type: 2}
+  strahlBreite: 0.2
+  strahlDauer: 0.08
+--- !u!82 &3052764609405440901
 AudioSource:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -5132,7 +5110,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: 44a7e54b58a527a49ad0e6e037640e6e, type: 3}
+  m_Resource: {fileID: 8300000, guid: ab15f3c8a7e97434886f2cbb4b577bbe, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
