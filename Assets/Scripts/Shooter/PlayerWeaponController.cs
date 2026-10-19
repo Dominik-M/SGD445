@@ -62,12 +62,16 @@ namespace Shooter
             if (amWechseln) return;
 
             // Alle Inputs einsammeln
-            bool fire = FireInput.action.IsPressed();
-            bool reload = ReloadInput.action.IsPressed();
-            bool prev = PrevInput.action.IsPressed();
-            bool next = NextInput.action.IsPressed();
+            bool fire = FireInput.action.WasPressedThisFrame();
+            bool reload = ReloadInput.action.WasPressedThisFrame();
 
             AktuelleWaffe.Firing = fire;
+
+            // Waffenwechsel verhindern während Nachladen
+            if (AktuelleWaffe != null && AktuelleWaffe.ReloadTime > 0) return;
+
+            bool prev = PrevInput.action.WasPressedThisFrame();
+            bool next = NextInput.action.WasPressedThisFrame();
             if (prev) PrevWpn();
             else if (next) NextWpn();
         }
@@ -87,7 +91,12 @@ namespace Shooter
         {
             int neuIndex = aktuelleWaffeIndex - 1;
             if (neuIndex < 0) neuIndex = alleWaffen.Length - 1;
-            // TODO noch prüfen ob die neue Waffe freigeschaltet ist
+            // Noch prüfen ob die neue Waffe freigeschaltet ist
+            while (neuIndex != aktuelleWaffeIndex && !HatMunition(neuIndex))
+            {
+                neuIndex--;
+                if (neuIndex < 0) neuIndex = alleWaffen.Length - 1;
+            }
             WechselWaffe(neuIndex);
         }
 
@@ -95,8 +104,19 @@ namespace Shooter
         {
             int neuIndex = aktuelleWaffeIndex + 1;
             if (neuIndex >= alleWaffen.Length) neuIndex = 0;
-            // TODO noch prüfen ob die neue Waffe freigeschaltet ist
+            // Noch prüfen ob die neue Waffe freigeschaltet ist
+            while (neuIndex != aktuelleWaffeIndex && !HatMunition(neuIndex))
+            {
+                neuIndex++;
+                if (neuIndex >= alleWaffen.Length) neuIndex = 0;
+            }
             WechselWaffe(neuIndex);
+        }
+
+        bool HatMunition(int index)
+        {
+            if (index < 0 || index >= alleWaffen.Length) return false;
+            return alleWaffen[index].Ammo > 0;
         }
 
         public void WechselWaffe(int index)

@@ -1910,6 +1910,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 329061}
     m_Modifications:
+    - target: {fileID: 494229161719773894, guid: e5dfde8ce1df2fa47a709a9d3f031a26, type: 3}
+      propertyPath: automatic
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 494229161719773894, guid: e5dfde8ce1df2fa47a709a9d3f031a26, type: 3}
+      propertyPath: shootDelay
+      value: 0.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 494229161719773894, guid: e5dfde8ce1df2fa47a709a9d3f031a26, type: 3}
+      propertyPath: damageScale
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2523352700941273233, guid: e5dfde8ce1df2fa47a709a9d3f031a26, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

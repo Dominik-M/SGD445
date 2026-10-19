@@ -7,8 +7,11 @@ namespace Shooter
         // ─── Inspector Fields ─────────────────────────────────────────────────────
         [Header("References")]
         [SerializeField] GameObject shotPrefab;
+        [Header("Vollautomatik")]
+        [SerializeField] bool automatic = true;
         public override void Shoot()
         {
+            Firing = automatic;// Bei Halbautomatik nach jedem Schuss feuer einstellen
             foreach (Transform gunpoint in gunpoints)
             {
                 GameObject instance = Instantiate(shotPrefab);
